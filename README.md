@@ -1,2 +1,2 @@
-# Epidemic-Containment-Strategie-Modell
-Epidemic Containment Strategie Modell
+# Epidemic-Containment-Strategy-Modell
+Epidemic Containment Strategy Modell
