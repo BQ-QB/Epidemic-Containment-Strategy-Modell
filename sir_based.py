@@ -17,18 +17,20 @@ ccolor = ['#0008FF', '#DB0000', '#12F200', '#68228B', '#000000']
 
 def plot_sir():
 
-    temp1 = SH.shape[0]
+    temp1 = susceptible_history.shape[0]
     temp1 = np.array([i for i in range(temp1)])
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
-    label1 = 'Susceptible = ' + str(SH[-1])
-    label2 = 'Recovered = ' + str(RH[-1])
-    label3 = 'Infected = ' + str(IH[-1])
-    label4 = 'Dead = ' + str(DH[-1])
-    ax.plot(temp1, SH, color='yellow', label=label1)
-    ax.plot(temp1, RH, color='blue', label=label2)
-    ax.plot(temp1, IH, color='red', label=label3)
-    ax.plot(temp1, DH, color='purple', label=label4)
+    label_susceptible = 'Susceptible = ' + str(susceptible_history[-1])
+    label_recovered = 'Recovered = ' + str(recovered_history[-1])
+    label_infected = 'Infected = ' + str(infected_history[-1])
+    label_dead = 'Dead = ' + str(dead_history[-1])
+    label_isolation = 'Isolation = ' + str(isolation_history[-1])
+    ax.plot(temp1, susceptible_history, color = 'blue', label = label_susceptible)
+    ax.plot(temp1, recovered_history, color = 'green', label = label_recovered)
+    ax.plot(temp1, infected_history, color = 'red', label = label_infected)
+    ax.plot(temp1, dead_history, color = 'purple', label = label_dead)
+    ax.plot(temp1, isolation_history, color = 'black', label = label_isolation)
     ax.set_title('Infection plot')
     ax.legend()
     plt.show()
@@ -46,10 +48,11 @@ N = 100000  # Simulation time
 l = 80     # Lattice size
 
 # Historylists used for plotting SIR-graph
-IH = np.array([initial_infected-1])
-SH = np.array([n-initial_infected+1])
-RH = np.array([0])
-DH = np.array([0])
+infected_history = np.array([initial_infected-1])
+susceptible_history = np.array([n-initial_infected+1])
+recovered_history = np.array([0])
+dead_history = np.array([0])
+isolation_history = np.array([0])
 
 #Contact matrix
 contact = -1*np.ones((n, 5))
@@ -96,7 +99,7 @@ G = 0.03
 My = 0.00
 start_lock = 50
 lockdown_enabled = True
-test_capacity = 100
+test_capacity = 30
 
 set_temps()
 t = 0
@@ -120,8 +123,8 @@ while t < 1000 and list(np.where(S == 1)[0]):
         S[i] = 3
 
     recovered_list = np.where((S == 1) & (np.random.rand(n) < G))[0]
-    S[recovered_list] = 2         # Recovery
-    # Isolated[ recovered_list ] = 0
+    S[recovered_list] = 2                                         # Recovery
+    # Isolated[ recovered_list ] = 0                              # Lets recovered people out from isolation 
     # temperatures [recovered_list] = np.random.normal(36, 1)
 
     for j in range(n):
@@ -170,10 +173,11 @@ while t < 1000 and list(np.where(S == 1)[0]):
     x = nx                                              # Update x 
     y = ny                                              # Update y 
 
-    SH = np.append(SH, len(list(np.where(S == 0)[0])))
-    IH = np.append(IH, len(list(np.where(S == 1)[0])))
-    RH = np.append(RH, len(list(np.where(S == 2)[0])))
-    DH = np.append(DH, len(list(np.where(S == 3)[0])))
+    susceptible_history = np.append(susceptible_history, len(list(np.where(S == 0)[0])))
+    infected_history = np.append(infected_history, len(list(np.where(S == 1)[0])))
+    recovered_history = np.append(recovered_history, len(list(np.where(S == 2)[0])))
+    dead_history = np.append(dead_history, len(list(np.where(S == 3)[0])))
+    isolation_history = np.append(isolation_history, len(list(np.where(isolated == 1)[0])))
     
     t += 1
 
