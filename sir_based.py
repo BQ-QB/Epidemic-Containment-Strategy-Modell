@@ -12,6 +12,19 @@ tk.attributes('-topmost', 0)
 canvas.place(x=res/20, y=res/20, height=res, width=res)
 ccolor = ['#0008FF', '#DB0000', '#12F200', '#68228B', '#000000']
 
+def __init__():
+    x = np.floor(np.random.rand(n) * l)  # x coordinates
+    y = np.floor(np.random.rand(n) * l)  # y coordinates
+    S = np.zeros(n)  # status array, 0: Susceptiple, 1: Infected, 2: recovered, 3: Dead
+    isolated = np.zeros(n)  # Isolation array, 0: not isolated, 1: Is currently in isolation
+    temperatures = np.zeros(n)  # temperature array
+    S[1:initial_infected] = 1  # Infect agents that are close to center
+
+    nx = x  # updated x
+    ny = y  # updated y
+    return x, y, S, isolated, temperatures, nx, ny
+
+
 
 def plot_sir():
     temp1 = SH.shape[0]
@@ -88,17 +101,8 @@ DH = np.array([0])
 #Contact matrix
 contact = -1*np.ones((n, 5))
 
-
+x, y, S, isolated, temperatures, nx, ny = __init__()
 # Physical parameters of the system 
-x = np.floor(np.random.rand(n)*l)          # x coordinates            
-y = np.floor(np.random.rand(n)*l)          # y coordinates  
-S = np.zeros(n)                            # status array, 0: Susceptiple, 1: Infected, 2: recovered, 3: Dead 
-isolated = np.zeros(n)                     # Isolation array, 0: not isolated, 1: Is currently in isolation                   # test array; 0: Should not be isolated, 1: Positive test, should be isolated 
-temperatures = np.zeros(n)                            # temperature array
-S[1:initial_infected] = 1              # Infect agents that are close to center 
-
-nx = x                           # updated x                  
-ny = y                           # updated y  
 
 particles = []
 R = .5                          # agent plot radius 
@@ -139,9 +143,6 @@ t = 0
 while t < 1000 and list(np.where(S == 1)[0]):
     nx, ny = update_position()
     update_states()
-    # Recovery
-    # Isolated[ recovered_list ] = 0
-    # temperatures [recovered_list] = np.random.normal(36, 1)
 
     for j in range(n):
         canvas.move(particles[j], (nx[j]-x[j]) * res/l, (ny[j]-y[j])*res/l)         # Plot update - Positions
@@ -157,10 +158,8 @@ while t < 1000 and list(np.where(S == 1)[0]):
         for j in range(min(5, len(proximity_list[0]))):
             contact[i][j] = proximity_list[0][j]
 
-
     test_agents()
 
-  
     # lockdown_enabled loop
     if start_lock < t < start_lock + 200 and lockdown_enabled:
         D = D_reduced
