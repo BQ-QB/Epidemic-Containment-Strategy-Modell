@@ -50,7 +50,6 @@ def test_agents():
         tests_made = 0
         while tests_made < test_capacity and i < n - 1:
             if isolated[test_priority[-i - 1]] != 1:
-
                 if S[test_priority[-i - 1]] == 1:
                     isolated[test_priority[-i - 1]] = 1
                     for k in range(5):
@@ -61,6 +60,11 @@ def test_agents():
 
 
 def update_states():
+    for i in np.where((isolated != 1) & (S == 1) & (np.random.random(n) < B))[0]:     # loop over infecting agents
+        temperatures [(x == x[i]) & (y == y[i]) & (S == 0)] = np.random.normal(40, 1)          # Raise newly sick agents temperatures
+        S[(x == x[i]) & (y == y[i]) & (S == 0)] = 1         # Susceptiples together with infecting agent becomes infected
+    for i in np.where((S == 1) & (np.random.random(n) < My))[0]:
+        S[i] = 3
     recovered_list = np.where((S == 1) & (np.random.rand(n) < G))[0]
     S[recovered_list] = 2
     isolated[recovered_list] = 0
@@ -134,13 +138,6 @@ t = 0
 
 while t < 1000 and list(np.where(S == 1)[0]):
     nx, ny = update_position()
-    for i in np.where((isolated != 1) & (S == 1) & (np.random.random(n) < B))[0]:     # loop over infecting agents
-        temperatures [(x == x[i]) & (y == y[i]) & (S == 0)] = np.random.normal(40, 1)          # Raise newly sick agents temperatures
-        S[(x == x[i]) & (y == y[i]) & (S == 0)] = 1         # Susceptiples together with infecting agent becomes infected
-
-    for i in np.where((S == 1) & (np.random.random(n) < My))[0]:
-        S[i] = 3
-
     update_states()
     # Recovery
     # Isolated[ recovered_list ] = 0
@@ -160,8 +157,7 @@ while t < 1000 and list(np.where(S == 1)[0]):
         for j in range(min(5, len(proximity_list[0]))):
             contact[i][j] = proximity_list[0][j]
 
-    
-    # Tests sick agents, if positive test then set in isolation and isolate neighbours in contactmatrix
+
     test_agents()
 
   
