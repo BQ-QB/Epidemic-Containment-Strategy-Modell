@@ -12,6 +12,7 @@ tk.attributes('-topmost', 0)
 canvas.place(x=res/20, y=res/20, height=res, width=res)
 ccolor = ['#0008FF', '#DB0000', '#12F200', '#68228B', '#000000']
 
+
 def __init__():
     x = np.floor(np.random.rand(n) * l)  # x coordinates
     y = np.floor(np.random.rand(n) * l)  # y coordinates
@@ -19,7 +20,6 @@ def __init__():
     isolated = np.zeros(n)  # Isolation array, 0: not isolated, 1: Is currently in isolation
     temperatures = np.zeros(n)  # temperature array
     S[1:initial_infected] = 1  # Infect agents that are close to center
-
     nx = x  # updated x
     ny = y  # updated y
     return x, y, S, isolated, temperatures, nx, ny
@@ -83,6 +83,14 @@ def update_states():
     isolated[recovered_list] = 0
 
 
+def set_temps():
+    for i in np.where(S == 1)[0]:
+        temperatures [i] = np.random.normal(40,1)
+
+    for i in np.where(temperatures == 0)[0]:
+        temperatures [i] = np.random.normal(36,1)
+
+
 show_plot = Button(tk, text='Plot', command=plot_sir)
 show_plot.place(relx=0.05, rely=0.85, relheight=0.06, relwidth=0.15)
 
@@ -113,13 +121,6 @@ for j in range(n):     # Generate animated particles in Canvas
                                          (y[j]+2*R)*res/l,
                                          outline=ccolor[0], fill=ccolor[0]))
 
-
-def set_temps():
-    for i in np.where(S == 1)[0]:
-        temperatures [i] = np.random.normal(40,1)
-
-    for i in np.where(temperatures == 0)[0]:
-        temperatures [i] = np.random.normal(36,1)
         
 #test
 
