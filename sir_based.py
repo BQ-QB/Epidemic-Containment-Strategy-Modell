@@ -32,6 +32,7 @@ def plot_sir():
     ax.legend()
     plt.show()
 
+#test
 
 def update_position():
     steps_x_or_y = np.random.rand(n)
