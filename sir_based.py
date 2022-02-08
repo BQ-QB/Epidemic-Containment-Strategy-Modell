@@ -83,6 +83,7 @@ def set_temps():
     for i in np.where(temperatures  == 0)[0]:
         temperatures [i] = np.random.normal(36,1)
         
+#test
 
 # Modifiable parameters by the user 
 
