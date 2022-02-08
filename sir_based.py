@@ -13,11 +13,6 @@ canvas.place(x=res/20, y=res/20, height=res, width=res)
 ccolor = ['#0008FF', '#DB0000', '#12F200', '#68228B', '#000000']
 
 
-def restart():
-    global S
-    I = np.argsort((x-l/2)**2 + (y-l/2)**2)
-    S = np.zeros(n) 
-    S[I[1:initial_infected]] = 1
 
 
 def plot_sir():
@@ -38,28 +33,14 @@ def plot_sir():
     plt.show()
 
 
-showPlot = Button(tk, text='Plot', command=plot_sir)
-showPlot.place(relx=0.05, rely=0.85, relheight=0.06, relwidth=0.15)
+show_plot = Button(tk, text='Plot', command=plot_sir)
+show_plot.place(relx=0.05, rely=0.85, relheight=0.06, relwidth=0.15)
 
-rest = Button(tk, text='Restart', command=restart)
-rest.place(relx=0.05, rely=.91, relheight=0.06, relwidth=0.15)
-
-Beta = Scale(tk, from_=0, to=1, orient=HORIZONTAL, label='Infection probability', font=("Helvetica", 8), resolution=0.01)
-Beta.place(relx=.22, rely=.85, relheight=0.12, relwidth=0.23)
-Beta.set(1)            # Parameter slider for infection rate                                                       
-
-Gamma = Scale(tk, from_=0, to=0.1, orient=HORIZONTAL, label='Recovery rate', font=("Helvetica", 8), resolution=0.001)
-Gamma.place(relx=.47, rely=.85, relheight=0.12, relwidth=0.23)
-Gamma.set(0.01)          # Parameter slider for recovery rate
-
-Diff = Scale(tk, from_=0, to=1, orient=HORIZONTAL, label='Diffusion probability', font=("Helvetica", 8), resolution=0.01)
-Diff.place(relx=.72, rely=.85, relheight=0.12, relwidth=0.23)
-Diff.set(0.5)            # Parameter slider for diffusion rate
 
 
 # Parameters of the simulation
 n = 800       # Number of agents 
-initial_infected = 4   # Initial infected agents
+initial_infected = 10   # Initial infected agents
 N = 100000  # Simulation time
 l = 50     # Lattice size
 
@@ -106,11 +87,14 @@ def set_temps():
 
 
 t = 0
+D_noll = 0.8
+D_reduced = 0.1
 set_temps()
-B = Beta.get()
-G = Gamma.get()
-D = Diff.get()
+B = 1
+G = 0.03
+D = D_noll
 My = 0.00
+start_lock = 50
 
 
 while t < 1000 and list(np.where(S == 1)[0]):
@@ -153,7 +137,7 @@ while t < 1000 and list(np.where(S == 1)[0]):
 
 
     # Tests sick agents, if positive test then set in isolation
-    if t > 5:
+    if t > 50:
 
         test_capacity = 10
         test_priority = np.argsort(Q)
@@ -172,10 +156,9 @@ while t < 1000 and list(np.where(S == 1)[0]):
 
 
     # lockdown loop
-    startLock = 50
-    if startLock < t < startLock + 200 and lockdown:
-        D = 0.1
-    else: D = Diff.get()
+    if start_lock < t < start_lock + 200 and lockdown:
+        D = D_reduced
+    else: D = D_noll
 
     x = nx                                              # Update x 
     y = ny                                              # Update y 
