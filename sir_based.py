@@ -153,8 +153,8 @@ while t < 1000 and list(np.where(S == 1)[0]):
                 if S[test_priority[-i-1]] == 1:
                     isolated[test_priority[-i-1]] = 1
                     for k in range(5):
-                        if contact[test_priority[n-i-1]][k] != -1:
-                            isolated[ int(contact[test_priority[n-i-1]][k]) ] = 1
+                        if contact[test_priority[-i-1]][k] != -1:
+                            isolated[ int(contact[test_priority[-i-1]][k]) ] = 1
                             
                 tests_made += 1   
 
