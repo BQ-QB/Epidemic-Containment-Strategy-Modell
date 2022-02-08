@@ -58,7 +58,7 @@ Diff.set(0.5)            # Parameter slider for diffusion rate
 
 
 # Parameters of the simulation
-n = 8       # Number of agents 
+n = 800       # Number of agents 
 initial_infected = 4   # Initial infected agents
 N = 100000  # Simulation time
 l = 50     # Lattice size
@@ -70,15 +70,14 @@ RH = np.array([0])
 DH = np.array([0])
 
 #Contact matrix
-Contact = -1*np.ones((n, 5))
+contact = -1*np.ones((n, 5))
 
 
 # Physical parameters of the system 
 x = np.floor(np.random.rand(n)*l)          # x coordinates            
 y = np.floor(np.random.rand(n)*l)          # y coordinates  
 S = np.zeros(n)                            # status array, 0: Susceptiple, 1: Infected, 2: recovered, 3: Dead 
-Isolated = np.zeros(n)                     # Isolation array, 0: not isolated, 1: Is currently in isolation
-toBeTested = np.zeros(n)                   # test array; 0: Should not be isolated, 1: Positive test, should be isolated 
+isolated = np.zeros(n)                     # Isolation array, 0: not isolated, 1: Is currently in isolation                   # test array; 0: Should not be isolated, 1: Positive test, should be isolated 
 Q = np.zeros(n)                            # temperature array
 I = np.argsort((x-l/2)**2 + (y-l/2)**2)
 S[1:initial_infected] = 1              # Infect agents that are close to center 
@@ -121,53 +120,53 @@ while t < 1000 and list(np.where(S == 1)[0]):
     steps_y = (steps_x_or_y > D/2) & (steps_x_or_y < D)
     nx = (x + np.sign(np.random.randn(n)) * steps_x) % l 
     ny = (y + np.sign(np.random.randn(n)) * steps_y) % l
-    for i in np.where(((Isolated != 0) | (S == 3))):
+    for i in np.where(((isolated != 0) | (S == 3))):
         nx[i] = x[i]
         ny[i] = y[i]
 
-    for i in np.where((Isolated != 1) & (S == 1) & (np.random.random(n) < B))[0]:     # loop over infecting agents
+    for i in np.where((isolated != 1) & (S == 1) & (np.random.random(n) < B))[0]:     # loop over infecting agents
         Q[(x == x[i]) & (y == y[i]) & (S == 0)] = np.random.normal(40, 1)          # Raise newly sick agents temperatures
         S[(x == x[i]) & (y == y[i]) & (S == 0)] = 1         # Susceptiples together with infecting agent becomes infected
 
     for i in np.where((S == 1) & (np.random.random(n) < My))[0]:
         S[i] = 3
 
-    templist = np.where((S == 1) & (np.random.rand(n) < G))[0]
-    S[templist] = 2         # Recovery
+    temp_list = np.where((S == 1) & (np.random.rand(n) < G))[0]
+    S[temp_list] = 2         # Recovery
     # Isolated[ templist ] = 0
-    Q[templist] = np.random.normal(36, 1)
+    Q[temp_list] = np.random.normal(36, 1)
 
     for j in range(n):
         canvas.move(particles[j], (nx[j]-x[j]) * res/l, (ny[j]-y[j])*res/l)         # Plot update - Positions
-        canvas.itemconfig(particles[j], outline='#303030', fill=ccolor[int(S[j]) if Isolated[j] == 0 else 4])  # Plot update - Colors
+        canvas.itemconfig(particles[j], outline='#303030', fill=ccolor[int(S[j]) if isolated[j] == 0 else 4])  # Plot update - Colors
     tk.update()
     tk.title('Infected:' + str(np.sum(S==1)))
 
     # Management of contactmatrix
     for i in range(n):
 
-        proximitylist = np.where((x == x[i]) & (y == y[i]))
+        proximity_list = np.where((x == x[i]) & (y == y[i]))
         
-        for j in range(min(5, len(proximitylist[0]))):
-            Contact[i][j] = proximitylist[0][j]
+        for j in range(min(5, len(proximity_list[0]))):
+            contact[i][j] = proximity_list[0][j]
            
 
 
     # Tests sick agents, if positive test then set in isolation
     if t > 5:
 
-        testCapacity = 10
-        testPriority = np.argsort(Q)
+        test_capacity = 10
+        test_priority = np.argsort(Q)
         
         i = 0
-        while i < testCapacity:
-            if Isolated[testPriority[n-1-i]] != 1:
-                if int(S[testPriority[n-1-i]]) == 1:
-                    Isolated[testPriority[n-i-1]] = 1
+        while i < test_capacity:
+            if isolated[test_priority[n-1-i]] != 1:
+                if int(S[test_priority[n-1-i]]) == 1:
+                    isolated[test_priority[n-i-1]] = 1
                     for k in range(5):
-                        if Contact[testPriority[n-i-1]][k] != -1:
-                            Isolated[int(Contact[testPriority[n-i-1]][k])] = 1
-                            print(int(Contact[testPriority[n-i-1]][k]))
+                        if contact[test_priority[n-i-1]][k] != -1:
+                            isolated[int(contact[test_priority[n-i-1]][k])] = 1
+                            print(int(contact[test_priority[n-i-1]][k]))
 
             i = i+1
 
