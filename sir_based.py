@@ -16,6 +16,7 @@ ccolor = ['#0008FF', '#DB0000', '#12F200', '#68228B', '#000000']
 
 
 def plot_sir():
+
     temp1 = SH.shape[0]
     temp1 = np.array([i for i in range(temp1)])
     fig = plt.figure()
@@ -39,10 +40,10 @@ show_plot.place(relx=0.05, rely=0.85, relheight=0.06, relwidth=0.15)
 
 
 # Parameters of the simulation
-n = 800       # Number of agents 
-initial_infected = 10   # Initial infected agents
+n = 1000     # Number of agents 
+initial_infected = 50   # Initial infected agents
 N = 100000  # Simulation time
-l = 50     # Lattice size
+l = 80     # Lattice size
 
 # Historylists used for plotting SIR-graph
 IH = np.array([initial_infected-1])
@@ -59,14 +60,11 @@ x = np.floor(np.random.rand(n)*l)          # x coordinates
 y = np.floor(np.random.rand(n)*l)          # y coordinates  
 S = np.zeros(n)                            # status array, 0: Susceptiple, 1: Infected, 2: recovered, 3: Dead 
 isolated = np.zeros(n)                     # Isolation array, 0: not isolated, 1: Is currently in isolation                   # test array; 0: Should not be isolated, 1: Positive test, should be isolated 
-Q = np.zeros(n)                            # temperature array
-I = np.argsort((x-l/2)**2 + (y-l/2)**2)
+temperatures  = np.zeros(n)                            # temperature array
 S[1:initial_infected] = 1              # Infect agents that are close to center 
 
 nx = x                           # updated x                  
 ny = y                           # updated y  
-
-lockdown = True
 
 particles = []
 R = .5                          # agent plot radius 
@@ -80,22 +78,28 @@ for j in range(n):     # Generate animated particles in Canvas
 
 def set_temps():
     for i in np.where(S == 1)[0]:
-        Q[i] = np.random.normal(40,1)
-        print(Q[i])
-    for i in np.where(Q == 0)[0]:
-        Q[i] = np.random.normal(36,1)
+        temperatures [i] = np.random.normal(40,1)
 
+    for i in np.where(temperatures  == 0)[0]:
+        temperatures [i] = np.random.normal(36,1)
+        
 
-t = 0
+# Modifiable parameters by the user 
+
 D_noll = 0.8
 D_reduced = 0.1
-set_temps()
+
+D = D_noll
 B = 1
 G = 0.03
-D = D_noll
+
 My = 0.00
 start_lock = 50
+lockdown_enabled = True
+test_capacity = 100
 
+set_temps()
+t = 0
 
 while t < 1000 and list(np.where(S == 1)[0]):
 
@@ -109,16 +113,16 @@ while t < 1000 and list(np.where(S == 1)[0]):
         ny[i] = y[i]
 
     for i in np.where((isolated != 1) & (S == 1) & (np.random.random(n) < B))[0]:     # loop over infecting agents
-        Q[(x == x[i]) & (y == y[i]) & (S == 0)] = np.random.normal(40, 1)          # Raise newly sick agents temperatures
+        temperatures [(x == x[i]) & (y == y[i]) & (S == 0)] = np.random.normal(40, 1)          # Raise newly sick agents temperatures
         S[(x == x[i]) & (y == y[i]) & (S == 0)] = 1         # Susceptiples together with infecting agent becomes infected
 
     for i in np.where((S == 1) & (np.random.random(n) < My))[0]:
         S[i] = 3
 
-    temp_list = np.where((S == 1) & (np.random.rand(n) < G))[0]
-    S[temp_list] = 2         # Recovery
-    # Isolated[ templist ] = 0
-    Q[temp_list] = np.random.normal(36, 1)
+    recovered_list = np.where((S == 1) & (np.random.rand(n) < G))[0]
+    S[recovered_list] = 2         # Recovery
+    # Isolated[ recovered_list ] = 0
+    # temperatures [recovered_list] = np.random.normal(36, 1)
 
     for j in range(n):
         canvas.move(particles[j], (nx[j]-x[j]) * res/l, (ny[j]-y[j])*res/l)         # Plot update - Positions
@@ -135,28 +139,31 @@ while t < 1000 and list(np.where(S == 1)[0]):
             contact[i][j] = proximity_list[0][j]
            
 
-
-    # Tests sick agents, if positive test then set in isolation
-    if t > 50:
-
-        test_capacity = 10
-        test_priority = np.argsort(Q)
+    
+    
+    # Tests sick agents, if positive test then set in isolation and isolate neighbours in contactmatrix
+    if t > 5:
         
+        test_priority = np.argsort(temperatures)
         i = 0
-        while i < test_capacity:
-            if isolated[test_priority[n-1-i]] != 1:
-                if int(S[test_priority[n-1-i]]) == 1:
-                    isolated[test_priority[n-i-1]] = 1
+        tests_made = 0
+        while tests_made < test_capacity and i<n-1 :
+            if isolated[test_priority[-i-1]] != 1:
+                
+                if S[test_priority[-i-1]] == 1:
+                    isolated[test_priority[-i-1]] = 1
                     for k in range(5):
                         if contact[test_priority[n-i-1]][k] != -1:
-                            isolated[int(contact[test_priority[n-i-1]][k])] = 1
-                            print(int(contact[test_priority[n-i-1]][k]))
+                            isolated[ int(contact[test_priority[n-i-1]][k]) ] = 1
+                            
+                tests_made += 1   
 
             i = i+1
+        
 
-
-    # lockdown loop
-    if start_lock < t < start_lock + 200 and lockdown:
+  
+    # lockdown_enabled loop
+    if start_lock < t < start_lock + 200 and lockdown_enabled:
         D = D_reduced
     else: D = D_noll
 
@@ -167,6 +174,7 @@ while t < 1000 and list(np.where(S == 1)[0]):
     IH = np.append(IH, len(list(np.where(S == 1)[0])))
     RH = np.append(RH, len(list(np.where(S == 2)[0])))
     DH = np.append(DH, len(list(np.where(S == 3)[0])))
+    
     t += 1
 
     if t % 300 == 0:
