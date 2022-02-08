@@ -13,13 +13,15 @@ tk.attributes('-topmost', 0)
 canvas.place(x=res/20, y=res/20, height= res, width= res)
 ccolor = ['#0008FF', '#DB0000', '#12F200','#68228B' ,'#000000']
 
+
 def restart():
     global S
     I = np.argsort((x-l/2)**2 + (y-l/2)**2)
     S = np.zeros(n) 
     S[I[1:initial_infected]] = 1
 
-def plotSir():
+
+def plot_sir():
     temp1 = SH.shape[0]
     temp1 = np.array([i for i in range(temp1)])
     fig = plt.figure()
@@ -37,7 +39,7 @@ def plotSir():
     plt.show()
 
 
-showPlot = Button(tk, text = 'Plot', command = plotSir)
+showPlot = Button(tk, text = 'Plot', command = plot_sir)
 showPlot.place(relx = 0.05, rely = 0.85, relheight=0.06, relwidth=0.15)
 
 rest = Button(tk, text='Restart',command= restart) 
@@ -127,7 +129,6 @@ while t<1000 and list(np.where(S==1)[0]):
         nx[i] = x[i]
         ny[i] = y[i]
 
-
     for i in np.where((Isolated != 1) & (S==1) & ( np.random.random(n) < B ))[0]:     # loop over infecting agents 
         Q[(x==x[i]) & (y==y[i]) & (S==0)] = np.random.normal(40,1)          # Raise newly sick agents temperatures
         S[(x==x[i]) & (y==y[i]) & (S==0)] = 1         # Susceptiples together with infecting agent becomes infected 
@@ -193,6 +194,6 @@ while t<1000 and list(np.where(S==1)[0]):
     t+=1
 
     if t %300 == 0:
-        plotSir()
+        plot_sir()
 
 Tk.mainloop(canvas)                                     # Release animation handle (close window to finish) 
