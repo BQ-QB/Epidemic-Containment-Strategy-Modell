@@ -30,6 +30,7 @@ def plot_sir():
     ax.legend()
     plt.show()
 
+
 def update_position():
     steps_x_or_y = np.random.rand(n)
     steps_x = steps_x_or_y < D / 2
@@ -40,6 +41,30 @@ def update_position():
         nx[i] = x[i]
         ny[i] = y[i]
     return nx, ny
+
+
+def test_agents():
+    if t > 5:
+        test_priority = np.argsort(temperatures)
+        i = 0
+        tests_made = 0
+        while tests_made < test_capacity and i < n - 1:
+            if isolated[test_priority[-i - 1]] != 1:
+
+                if S[test_priority[-i - 1]] == 1:
+                    isolated[test_priority[-i - 1]] = 1
+                    for k in range(5):
+                        if contact[test_priority[n - i - 1]][k] != -1:
+                            isolated[int(contact[test_priority[n - i - 1]][k])] = 1
+                tests_made += 1
+            i = i + 1
+
+
+def update_states():
+    recovered_list = np.where((S == 1) & (np.random.rand(n) < G))[0]
+    S[recovered_list] = 2
+    isolated[recovered_list] = 0
+
 
 show_plot = Button(tk, text='Plot', command=plot_sir)
 show_plot.place(relx=0.05, rely=0.85, relheight=0.06, relwidth=0.15)
@@ -102,7 +127,7 @@ G = 0.03
 
 My = 0.00
 start_lock = 50
-lockdown_enabled = True
+lockdown_enabled = False
 test_capacity = 100
 set_temps()
 t = 0
@@ -116,8 +141,8 @@ while t < 1000 and list(np.where(S == 1)[0]):
     for i in np.where((S == 1) & (np.random.random(n) < My))[0]:
         S[i] = 3
 
-    recovered_list = np.where((S == 1) & (np.random.rand(n) < G))[0]
-    S[recovered_list] = 2         # Recovery
+    update_states()
+    # Recovery
     # Isolated[ recovered_list ] = 0
     # temperatures [recovered_list] = np.random.normal(36, 1)
 
@@ -125,7 +150,7 @@ while t < 1000 and list(np.where(S == 1)[0]):
         canvas.move(particles[j], (nx[j]-x[j]) * res/l, (ny[j]-y[j])*res/l)         # Plot update - Positions
         canvas.itemconfig(particles[j], outline='#303030', fill=ccolor[int(S[j]) if isolated[j] == 0 else 4])  # Plot update - Colors
     tk.update()
-    tk.title('Infected:' + str(np.sum(S==1)))
+    tk.title('Infected:' + str(np.sum(S == 1)))
 
     # Management of contactmatrix
     for i in range(n):
@@ -134,29 +159,10 @@ while t < 1000 and list(np.where(S == 1)[0]):
         
         for j in range(min(5, len(proximity_list[0]))):
             contact[i][j] = proximity_list[0][j]
-           
 
-    
     
     # Tests sick agents, if positive test then set in isolation and isolate neighbours in contactmatrix
-    if t > 5:
-
-        test_priority = np.argsort(temperatures)
-        i = 0
-        tests_made = 0
-        while tests_made < test_capacity and i<n-1 :
-            if isolated[test_priority[-i-1]] != 1:
-                
-                if S[test_priority[-i-1]] == 1:
-                    isolated[test_priority[-i-1]] = 1
-                    for k in range(5):
-                        if contact[test_priority[n-i-1]][k] != -1:
-                            isolated[ int(contact[test_priority[n-i-1]][k]) ] = 1
-                            
-                tests_made += 1   
-
-            i = i+1
-        
+    test_agents()
 
   
     # lockdown_enabled loop
