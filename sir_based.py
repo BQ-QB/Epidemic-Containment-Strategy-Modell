@@ -2,16 +2,6 @@ import numpy as np
 from tkinter import *
 import matplotlib.pyplot as plt
 
-res = 500   # Animation resolution
-tk = Tk()  
-tk.geometry(str(int(res*1.1)) + 'x' + str(int(res*1.3)))
-tk.configure(background='white')
-
-canvas = Canvas(tk, bd=2)            # Generate animation window 
-tk.attributes('-topmost', 0)
-canvas.place(x=res/20, y=res/20, height=res, width=res)
-ccolor = ['#0008FF', '#DB0000', '#12F200', '#68228B', '#000000']
-
 
 def __init__():
     x = np.floor(np.random.rand(n) * l)  # x coordinates
@@ -23,7 +13,6 @@ def __init__():
     nx = x  # updated x
     ny = y  # updated y
     return x, y, S, isolated, temperatures, nx, ny
-
 
 
 def plot_sir():
@@ -85,99 +74,110 @@ def update_states():
 
 def set_temps():
     for i in np.where(S == 1)[0]:
-        temperatures [i] = np.random.normal(40,1)
+        temperatures[i] = np.random.normal(37.4, 1.2)
 
     for i in np.where(temperatures == 0)[0]:
-        temperatures [i] = np.random.normal(36,1)
+        temperatures[i] = np.random.normal(36.8, 1.0)
 
 
-show_plot = Button(tk, text='Plot', command=plot_sir)
-show_plot.place(relx=0.05, rely=0.85, relheight=0.06, relwidth=0.15)
+if __name__ == '__main__':
+    res = 500  # Animation resolution
+    tk = Tk()
+    tk.geometry(str(int(res * 1.1)) + 'x' + str(int(res * 1.3)))
+    tk.configure(background='white')
 
-# Parameters of the simulation
-n = 1000     # Number of agents 
-initial_infected = 50   # Initial infected agents
-N = 100000  # Simulation time
-l = 80     # Lattice size
+    canvas = Canvas(tk, bd=2)  # Generate animation window
+    tk.attributes('-topmost', 0)
+    canvas.place(x=res / 20, y=res / 20, height=res, width=res)
+    ccolor = ['#0008FF', '#DB0000', '#12F200', '#68228B', '#000000']
 
-# Historylists used for plotting SIR-graph
-IH = np.array([initial_infected-1])
-SH = np.array([n-initial_infected+1])
-RH = np.array([0])
-DH = np.array([0])
+    show_plot = Button(tk, text='Plot', command=plot_sir)
+    show_plot.place(relx=0.05, rely=0.85, relheight=0.06, relwidth=0.15)
 
-#Contact matrix
-contact = -1*np.ones((n, 5))
+    # Parameters of the simulation
+    n = 1000     # Number of agents
+    initial_infected = 100   # Initial infected agents
+    N = 100000  # Simulation time
+    l = 80     # Lattice size
 
-x, y, S, isolated, temperatures, nx, ny = __init__()
-# Physical parameters of the system 
+    # Historylists used for plotting SIR-graph
+    IH = np.array([initial_infected-1])
+    SH = np.array([n-initial_infected+1])
+    RH = np.array([0])
+    DH = np.array([0])
 
-particles = []
-R = .5                          # agent plot radius 
-for j in range(n):     # Generate animated particles in Canvas 
-    particles.append(canvas.create_oval((x[j])*res/l,
-                                         (y[j])*res/l,
-                                         (x[j]+2*R)*res/l,
-                                         (y[j]+2*R)*res/l,
-                                         outline=ccolor[0], fill=ccolor[0]))
+    #Contact matrix
+    contact = -1*np.ones((n, 5))
 
-        
-#test
+    x, y, S, isolated, temperatures, nx, ny = __init__()
+    # Physical parameters of the system
 
-# Modifiable parameters by the user 
+    particles = []
+    R = .5                          # agent plot radius
+    for j in range(n):     # Generate animated particles in Canvas
+        particles.append(canvas.create_oval((x[j])*res/l,
+                                             (y[j])*res/l,
+                                             (x[j]+2*R)*res/l,
+                                             (y[j]+2*R)*res/l,
+                                             outline=ccolor[0], fill=ccolor[0]))
 
 
-D_noll = 0.8
-D_reduced = 0.1
+    #test
 
-D = D_noll
-B = 1
-G = 0.03
+    # Modifiable parameters by the user
 
-My = 0.00
-start_lock = 50
-lockdown_enabled = False
-test_capacity = 100
-set_temps()
-t = 0
 
-while t < 1000 and list(np.where(S == 1)[0]):
-    nx, ny = update_position()
-    update_states()
+    D_noll = 0.8
+    D_reduced = 0.1
 
-    for j in range(n):
-        canvas.move(particles[j], (nx[j]-x[j]) * res/l, (ny[j]-y[j])*res/l)         # Plot update - Positions
-        canvas.itemconfig(particles[j], outline='#303030', fill=ccolor[int(S[j]) if isolated[j] == 0 else 4])  # Plot update - Colors
-    tk.update()
-    tk.title('Infected:' + str(np.sum(S == 1)))
+    D = D_noll
+    B = 1
+    G = 0.03
 
-    # Management of contactmatrix
-    for i in range(n):
+    My = 0.00
+    start_lock = 50
+    lockdown_enabled = False
+    test_capacity = 100
+    set_temps()
+    t = 0
 
-        proximity_list = np.where((x == x[i]) & (y == y[i]))
-        
-        for j in range(min(5, len(proximity_list[0]))):
-            contact[i][j] = proximity_list[0][j]
+    while t < 1000 and list(np.where(S == 1)[0]):
+        nx, ny = update_position()
+        update_states()
 
-    test_agents()
+        for j in range(n):
+            canvas.move(particles[j], (nx[j]-x[j]) * res/l, (ny[j]-y[j])*res/l)         # Plot update - Positions
+            canvas.itemconfig(particles[j], outline='#303030', fill=ccolor[int(S[j]) if isolated[j] == 0 else 4])  # Plot update - Colors
+        tk.update()
+        tk.title('Infected:' + str(np.sum(S == 1)))
 
-    # lockdown_enabled loop
-    if start_lock < t < start_lock + 200 and lockdown_enabled:
-        D = D_reduced
-    else:
-        D = D_noll
+        # Management of contactmatrix
+        for i in range(n):
 
-    x = nx                                              # Update x 
-    y = ny                                              # Update y 
+            proximity_list = np.where((x == x[i]) & (y == y[i]))
 
-    SH = np.append(SH, len(list(np.where(S == 0)[0])))
-    IH = np.append(IH, len(list(np.where(S == 1)[0])))
-    RH = np.append(RH, len(list(np.where(S == 2)[0])))
-    DH = np.append(DH, len(list(np.where(S == 3)[0])))
-    
-    t += 1
+            for j in range(min(5, len(proximity_list[0]))):
+                contact[i][j] = proximity_list[0][j]
 
-    if t % 300 == 0:
-        plot_sir()
+        test_agents()
 
-Tk.mainloop(canvas)                                     # Release animation handle (close window to finish) 
+        # lockdown_enabled loop
+        if start_lock < t < start_lock + 200 and lockdown_enabled:
+            D = D_reduced
+        else:
+            D = D_noll
+
+        x = nx                                              # Update x
+        y = ny                                              # Update y
+
+        SH = np.append(SH, len(list(np.where(S == 0)[0])))
+        IH = np.append(IH, len(list(np.where(S == 1)[0])))
+        RH = np.append(RH, len(list(np.where(S == 2)[0])))
+        DH = np.append(DH, len(list(np.where(S == 3)[0])))
+
+        t += 1
+
+        if t % 300 == 0:
+            plot_sir()
+
+    Tk.mainloop(canvas)                                     # Release animation handle (close window to finish)
