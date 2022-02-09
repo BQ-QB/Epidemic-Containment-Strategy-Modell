@@ -14,20 +14,23 @@ def __init__():
     ny = y  # updated y
     return x, y, S, isolated, temperatures, nx, ny
 
-
+# Plots graph
 def plot_sir():
-    temp1 = SH.shape[0]
-    temp1 = np.array([i for i in range(temp1)])
+
+    index_list_for_plot = susceptible_history.shape[0]
+    index_list_for_plot = np.array([i for i in range(index_list_for_plot)])
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
-    label1 = 'Susceptible = ' + str(SH[-1])
-    label2 = 'Recovered = ' + str(RH[-1])
-    label3 = 'Infected = ' + str(IH[-1])
-    label4 = 'Dead = ' + str(DH[-1])
-    ax.plot(temp1, SH, color='yellow', label=label1)
-    ax.plot(temp1, RH, color='blue', label=label2)
-    ax.plot(temp1, IH, color='red', label=label3)
-    ax.plot(temp1, DH, color='purple', label=label4)
+    label_susceptible = 'Susceptible = ' + str(susceptible_history[-1])
+    label_recovered = 'Recovered = ' + str(recovered_history[-1])
+    label_infected = 'Infected = ' + str(infected_history[-1])
+    label_dead = 'Dead = ' + str(dead_history[-1])
+    label_isolation = 'Isolation = ' + str(isolation_history[-1])
+    ax.plot(index_list_for_plot, susceptible_history, color = 'blue', label = label_susceptible)
+    ax.plot(index_list_for_plot, recovered_history, color = 'green', label = label_recovered)
+    ax.plot(index_list_for_plot, infected_history, color = 'red', label = label_infected)
+    ax.plot(index_list_for_plot, dead_history, color = 'purple', label = label_dead)
+    ax.plot(index_list_for_plot, isolation_history, color = 'black', label = label_isolation)
     ax.set_title('Infection plot')
     ax.legend()
     plt.show()
@@ -45,21 +48,42 @@ def update_position():
         ny[i] = y[i]
     return nx, ny
 
+    
+
+
 
 def test_agents():
-    if t > 5:
-        test_priority = np.argsort(temperatures)
+    # Management of contactmatrix, to be developed further to enhance performance
+    # Currently a n x 5 matrix where the indexes of the last 5 contacts are saved
+    prod_list = np.zeros(n)
+    for i in range(n):
+
+        prod_list[i] = (2**x[i])*(3**y[i])
+    
+    contact[t % 50] = prod_list
+        
+        
+    # Tests sick agents, if positive test then set in isolation and isolate neighbours in contactmatrix
+    if t > 50:
+        
+        test_priority = np.argsort(temperatures) # test_priority is an array of indexes corresponding to increasing temperatures
+        
         i = 0
         tests_made = 0
-        while tests_made < test_capacity and i < n - 1:
-            if isolated[test_priority[-i - 1]] != 1:
-                if S[test_priority[-i - 1]] == 1:
-                    isolated[test_priority[-i - 1]] = 1
-                    for k in range(5):
-                        if contact[test_priority[n - i - 1]][k] != -1:
-                            isolated[int(contact[test_priority[n - i - 1]][k])] = 1
-                tests_made += 1
-            i = i + 1
+        while tests_made < test_capacity and i<n-1 : # can't use more tests than allowed, and can't test more agents than there are agents
+            if isolated[test_priority[-i-1]] != 1:   # Proceed if the selected agent is not already isolated
+                tests_made += 1                      # A test is counted
+                test_person = test_priority[-i-1]
+                if S[test_person] == 1:      # If the agent is sick put them in isolation, and isolate the recent contacts
+                    isolated[test_person] = 1 
+                    test_person_coordinate = (2**x[test_person])*(3**y[test_person])
+
+                    for k in range(min(50,t)):
+                        for p in np.where(contact[(t-k)%50] == test_person_coordinate): 
+                            if len(p)>0:             
+                                isolated[p] = 1
+                            
+            i = i+1
 
 
 def update_states():
@@ -73,6 +97,8 @@ def update_states():
     isolated[recovered_list] = 0
 
 
+
+
 def set_temps():
     for i in np.where(S == 1)[0]:
         temperatures[i] = np.random.normal(37.4, 1.2)
@@ -82,6 +108,21 @@ def set_temps():
 
 
 if __name__ == '__main__':
+
+    # Parameters of the simulation
+    n = 1000     # Number of agents
+    initial_infected = 100   # Initial infected agents
+    N = 100000  # Simulation time
+    l = 80     # Lattice size
+
+
+    # Historylists used for plotting SIR-graph
+    infected_history = np.array([initial_infected-1])
+    susceptible_history = np.array([n-initial_infected+1])
+    recovered_history = np.array([0])
+    dead_history = np.array([0])
+    isolation_history = np.array([0])
+
     res = 500  # Animation resolution
     tk = Tk()
     tk.geometry(str(int(res * 1.1)) + 'x' + str(int(res * 1.3)))
@@ -95,20 +136,10 @@ if __name__ == '__main__':
     show_plot = Button(tk, text='Plot', command=plot_sir)
     show_plot.place(relx=0.05, rely=0.85, relheight=0.06, relwidth=0.15)
 
-    # Parameters of the simulation
-    n = 1000     # Number of agents
-    initial_infected = 100   # Initial infected agents
-    N = 100000  # Simulation time
-    l = 80     # Lattice size
-
-    # Historylists used for plotting SIR-graph
-    IH = np.array([initial_infected-1])
-    SH = np.array([n-initial_infected+1])
-    RH = np.array([0])
-    DH = np.array([0])
 
     #Contact matrix
-    contact = -1*np.ones((n, 5))
+    contact = np.zeros((50, 1, n))
+
 
     x, y, S, isolated, temperatures, nx, ny = __init__()
     # Physical parameters of the system
@@ -152,13 +183,6 @@ if __name__ == '__main__':
         tk.update()
         tk.title('Infected:' + str(np.sum(S == 1)))
 
-        # Management of contactmatrix
-        for i in range(n):
-
-            proximity_list = np.where((x == x[i]) & (y == y[i]))
-
-            for j in range(min(5, len(proximity_list[0]))):
-                contact[i][j] = proximity_list[0][j]
 
         test_agents()
 
@@ -171,10 +195,12 @@ if __name__ == '__main__':
         x = nx                                              # Update x
         y = ny                                              # Update y
 
-        SH = np.append(SH, len(list(np.where(S == 0)[0])))
-        IH = np.append(IH, len(list(np.where(S == 1)[0])))
-        RH = np.append(RH, len(list(np.where(S == 2)[0])))
-        DH = np.append(DH, len(list(np.where(S == 3)[0])))
+        # Used for plotting the graph
+        susceptible_history = np.append(susceptible_history, len(list(np.where(S == 0)[0])))
+        infected_history = np.append(infected_history, len(list(np.where(S == 1)[0])))
+        recovered_history = np.append(recovered_history, len(list(np.where(S == 2)[0])))
+        dead_history = np.append(dead_history, len(list(np.where(S == 3)[0])))
+        isolation_history = np.append(isolation_history, len(list(np.where(isolated == 1)[0])))
 
         t += 1
 
