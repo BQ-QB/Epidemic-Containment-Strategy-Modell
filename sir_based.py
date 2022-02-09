@@ -14,9 +14,9 @@ def __init__():
     ny = y  # updated y
     return x, y, S, isolated, temperatures, nx, ny
 
+
 # Plots graph
 def plot_sir():
-
     index_list_for_plot = susceptible_history.shape[0]
     index_list_for_plot = np.array([i for i in range(index_list_for_plot)])
     fig = plt.figure()
@@ -35,7 +35,6 @@ def plot_sir():
     ax.legend()
     plt.show()
 
-#test
 
 def update_position():
     steps_x_or_y = np.random.rand(n)
@@ -48,26 +47,17 @@ def update_position():
         ny[i] = y[i]
     return nx, ny
 
-    
-
-
 
 def test_agents():
     # Management of contactmatrix, to be developed further to enhance performance
     # Currently a n x 5 matrix where the indexes of the last 5 contacts are saved
     prod_list = np.zeros(n)
     for i in range(n):
-
         prod_list[i] = (2**x[i])*(3**y[i])
-    
     contact[t % 50] = prod_list
-        
-        
     # Tests sick agents, if positive test then set in isolation and isolate neighbours in contactmatrix
     if t > 50:
-        
         test_priority = np.argsort(temperatures) # test_priority is an array of indexes corresponding to increasing temperatures
-        
         i = 0
         tests_made = 0
         while tests_made < test_capacity and i<n-1 : # can't use more tests than allowed, and can't test more agents than there are agents
@@ -77,12 +67,10 @@ def test_agents():
                 if S[test_person] == 1:      # If the agent is sick put them in isolation, and isolate the recent contacts
                     isolated[test_person] = 1 
                     test_person_coordinate = (2**x[test_person])*(3**y[test_person])
-
                     for k in range(min(50,t)):
                         for p in np.where(contact[(t-k)%50] == test_person_coordinate): 
                             if len(p)>0:             
                                 isolated[p] = 1
-                            
             i = i+1
 
 
@@ -95,8 +83,6 @@ def update_states():
     recovered_list = np.where((S == 1) & (np.random.rand(n) < G))[0]
     S[recovered_list] = 2
     isolated[recovered_list] = 0
-
-
 
 
 def set_temps():
@@ -114,8 +100,6 @@ if __name__ == '__main__':
     initial_infected = 100   # Initial infected agents
     N = 100000  # Simulation time
     l = 80     # Lattice size
-
-
     # Historylists used for plotting SIR-graph
     infected_history = np.array([initial_infected-1])
     susceptible_history = np.array([n-initial_infected+1])
@@ -136,10 +120,8 @@ if __name__ == '__main__':
     show_plot = Button(tk, text='Plot', command=plot_sir)
     show_plot.place(relx=0.05, rely=0.85, relheight=0.06, relwidth=0.15)
 
-
     #Contact matrix
     contact = np.zeros((50, 1, n))
-
 
     x, y, S, isolated, temperatures, nx, ny = __init__()
     # Physical parameters of the system
@@ -152,12 +134,8 @@ if __name__ == '__main__':
                                              (x[j]+2*R)*res/l,
                                              (y[j]+2*R)*res/l,
                                              outline=ccolor[0], fill=ccolor[0]))
-
-
     #test
-
     # Modifiable parameters by the user
-
 
     D_noll = 0.8
     D_reduced = 0.1
@@ -182,10 +160,7 @@ if __name__ == '__main__':
             canvas.itemconfig(particles[j], outline='#303030', fill=ccolor[int(S[j]) if isolated[j] == 0 else 4])  # Plot update - Colors
         tk.update()
         tk.title('Infected:' + str(np.sum(S == 1)))
-
-
         test_agents()
-
         # lockdown_enabled loop
         if start_lock < t < start_lock + 200 and lockdown_enabled:
             D = D_reduced
