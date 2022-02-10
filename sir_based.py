@@ -1,6 +1,13 @@
 import numpy as np 
 from tkinter import *
 import matplotlib.pyplot as plt
+from keras.datasets import mnist
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Flatten
+from keras.layers import Conv2D, MaxPooling2D
+from keras import backend as K
+from keras.utils import np_utils #Needed to enable "to_categorical"
+import keras
 
 
 def __init__():
@@ -14,6 +21,18 @@ def __init__():
     nx = x  # updated x
     ny = y  # updated y
     return x, y, S, isolated, temperatures, tested, nx, ny
+
+def setupNN():
+    model = Sequential()#Define the NN model
+    model.add(Dense(16, input_dim=5, activation = 'relu'))   #Add Layers
+    model.add(Dense(16, activation = 'relu'))
+    model.add(Dense(activation = 'relu', activation='softmax'))
+    model.add(Dropout(0.2))
+    model.compile(loss='mean_squared_error', optimizer='adam', metrics='accuracy')
+    #Input för NN
+    #model.fit(x_train, y_train, epochs=100) #vilken batch size?  #Input för NN
+    #model.evaluate(x_test, y_test, verbose=1) #Output för NN
+
 
 
 # Plots graph
