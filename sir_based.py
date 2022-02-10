@@ -1,4 +1,4 @@
-import numpy as np 
+import numpy as np
 from tkinter import *
 import matplotlib.pyplot as plt
 
@@ -8,7 +8,7 @@ def __init__():
     y = np.floor(np.random.rand(n) * l)  # y coordinates
     S = np.zeros(n)  # status array, 0: Susceptiple, 1: Infected, 2: recovered, 3: Dead
     isolated = np.zeros(n)  # Isolation array, 0: not isolated, 1: Is currently in isolation
-    temperatures = np.zeros(n, dtype = 'float16')  # temperature array
+    temperatures = np.zeros(n, dtype='float16')  # temperature array
     tested = np.zeros(n)
     S[0:initial_infected] = 1  # Infect agents that are close to center
     nx = x  # updated x
@@ -27,11 +27,11 @@ def plot_sir():
     label_infected = 'Infected = ' + str(infected_history[-1])
     label_dead = 'Dead = ' + str(dead_history[-1])
     label_isolation = 'Isolation = ' + str(isolation_history[-1])
-    ax.plot(index_list_for_plot, susceptible_history, color = 'blue', label = label_susceptible)
-    ax.plot(index_list_for_plot, recovered_history, color = 'green', label = label_recovered)
-    ax.plot(index_list_for_plot, infected_history, color = 'red', label = label_infected)
-    ax.plot(index_list_for_plot, dead_history, color = 'purple', label = label_dead)
-    #ax.plot(index_list_for_plot, isolation_history, color = 'black', label = label_isolation)
+    ax.plot(index_list_for_plot, susceptible_history, color='blue', label=label_susceptible)
+    ax.plot(index_list_for_plot, recovered_history, color='green', label=label_recovered)
+    ax.plot(index_list_for_plot, infected_history, color='red', label=label_infected)
+    ax.plot(index_list_for_plot, dead_history, color='purple', label=label_dead)
+    # ax.plot(index_list_for_plot, isolation_history, color = 'black', label = label_isolation)
     ax.set_title('Infection plot')
     ax.legend()
     plt.show()
@@ -48,78 +48,113 @@ def update_position():
         ny[i] = y[i]
     return nx, ny
 
-def gen_contact_tot():
-    prod_list = np.zeros(n)
-    A = np.zeros((n,n))
-    for i in range(n):
-        prod_list[i] = (2**x[i])*(3**y[i])
-    for i in range(n):
-        current_agent = i
-        for j in range(i+1,n):
-            if prod_list[current_agent] == prod_list[j]:
-                A[i][j] = 1
-            
-    
-    contact_tot[t % 50] = np.maximum(A,A.transpose())
 
-def gen_contact_i():
-    prod_list = np.zeros(n)
-    A = np.zeros((n,n))
-    for i in range(n):
-        prod_list[i] = (2**x[i])*(3**y[i])
-    for i in np.argsort(np.where((S==1) & (isolated!=1))[0]):
-        infected_agent = i
-        for j in np.where(((S==1)|(S==0)) & (isolated == 0))[0]:
-            
-            if (prod_list[infected_agent] == prod_list[j]) & (infected_agent != j):
-                A[i][j] = 1
-            
+def gen_contacts():
+    coord_list = np.zeros(n)
+    contact_list = np.zeros(n)
+    sick_contact_list = np.zeros(n)
+    quote_list = np.zeros(n)
+    contact_sum = np.zeros(n)
+    contact_infected_sum = np.zeros(n)
+    for agent in range(n):
+        coord_list[agent] = (2 ** x[agent]) * (3 ** y[agent])
 
-    contact_i[t % 50] = A
-    
+    for infected in np.argsort(np.where((S == 1) & (isolated != 1))[0]):
+        infected_agent = infected
+        for other_agent in np.where(((S == 1) | (S == 0)) & (isolated == 0))[0]:
+            if (coord_list[infected_agent] == coord_list[other_agent]) & (infected_agent != other_agent):
+                sick_contact_list[other_agent] += 1
 
-def gen_R():
-    pass
+    for agent in range(n):
+        current_agent = agent
+        for another_agent in range(n):
+            if (coord_list[current_agent] == coord_list[another_agent]) & (another_agent != current_agent):
+                contact_list[current_agent] += 1
+
+    for agent in range(n):
+        contact_sum[agent] = np.sum(contact_list, (0))[agent]
+        contact_infected_sum = 0
+
+    contact_i[t % 50] = sick_contact_list
+    contact_quota[t % 50] = quote_list
+
+
+def gen_R():  # testat generatorfunktion för R-matriserna
+    # nu implementerad som cirklar! Observera att koordinatsystemet har origo uppe i vänstra hörnet, så det nedre
+    # högra hörnet har koordinater (l,l)
+    R_16[t % 10] = np.zeros((l, l))
+    R_8[t % 10] = np.zeros((l, l))
+    R_4[t % 10] = np.zeros((l, l))
+    for sick_agents in np.where(S == 1)[0]:
+        xp = x[sick_agents]
+        yp = y[sick_agents]
+
+        for i in range(17):
+            if xp + i < l:
+                for j in range(17):
+                    if (yp + j < l) & ((j) ** 2 + (i) ** 2 <= 16 ** 2):
+                        R_16[t % 10][yp + j][xp + i] += 1
+                        if ((j) ** 2 + (i) ** 2 <= 8 ** 2):
+                            R_8[t % 10][yp + j][xp + i] += 1
+                        if ((j) ** 2 + (i) ** 2 <= 4 ** 2):
+                            R_4[t % 10][yp + j][xp + i] += 1
+                    if (yp - j >= 0) & ((j) ** 2 + (i) ** 2 <= 16 ** 2) & (j != 0):
+                        R_16[t % 10][yp - j][xp + i] += 1
+                        if ((j) ** 2 + (i) ** 2 <= 8 ** 2):
+                            R_8[t % 10][yp - j][xp + i] += 1
+                        if ((j) ** 2 + (i) ** 2 <= 4 ** 2):
+                            R_4[t % 10][yp - j][xp + i] += 1
+            if (xp - i >= 0) & (i != 0):
+                for j in range(17):
+                    if (yp + j < l) & ((j) ** 2 + (i) ** 2 <= 16 ** 2):
+                        R_16[t % 10][yp + j][xp - i] += 1
+                        if ((j) ** 2 + (i) ** 2 <= 8 ** 2):
+                            R_8[t % 10][yp + j][xp - i] += 1
+                        if ((j) ** 2 + (i) ** 2 <= 4 ** 2):
+                            R_4[t % 10][yp + j][xp - i] += 1
+                    if (yp - j >= 0) & ((j) ** 2 + (i) ** 2 <= 16 ** 2) & (j != 0):
+                        R_16[t % 10][yp - j][xp - i] += 1
+                        if ((j) ** 2 + (i) ** 2 <= 8 ** 2):
+                            R_8[t % 10][yp - j][xp - i] += 1
+                        if ((j) ** 2 + (i) ** 2 <= 4 ** 2):
+                            R_4[t % 10][yp - j][xp - i] += 1
+
 
 def test_agents():
     # Tests sick agents, if positive test then set in isolation and isolate neighbours in contactmatrix
     if t > 20:
-        contact_i_rowsums = np.sum(contact_i, (0,2))
+        contact_i_rowsums = np.sum(contact_i, (0, 2))
         d_type = [('Clist', np.int16), ('Temp', np.float16)]
-        test_priority = np.zeros((n,) , dtype = d_type)
+        test_priority = np.zeros((n,), dtype=d_type)
         test_priority['Clist'] = contact_i_rowsums
         test_priority['Temp'] = temperatures
-        test_priority = np.argsort(test_priority, order = ('Clist', 'Temp'))
-        
+        test_priority = np.argsort(test_priority, order=('Clist', 'Temp'))
+
         i = 0
         tests_made = 0
-        while tests_made < test_capacity and i<n-1 : # can't use more tests than allowed, and can't test more agents than there are agents
-            test_person = test_priority[-i-1]
+        while tests_made < test_capacity and i < n - 1:  # can't use more tests than allowed, and can't test more agents than there are agents
+            test_person = test_priority[-i - 1]
 
-            if isolated[test_person] != 1:   # Proceed if the selected agent is not already isolated
-                tests_made += 1              # A test is counted
-                
-                if S[test_person] == 1:      # Isolate sick testsubjects
-                    isolated[test_person] = 1 
-                    
-                            
-            i = i+1
-        
-        
-        
+            if isolated[test_person] != 1:  # Proceed if the selected agent is not already isolated
+                tests_made += 1  # A test is counted
+
+                if S[test_person] == 1:  # Isolate sick testsubjects
+                    isolated[test_person] = 1
+
+            i = i + 1
+
 
 def update_states():
-    for i in np.where((isolated != 1) & (S == 1) & (np.random.random(n) < B))[0]:     # loop over infecting agents
-        temperatures [(x == x[i]) & (y == y[i]) & (S == 0)] = np.random.normal(40, 1)          # Raise newly sick agents temperatures
-        S[(x == x[i]) & (y == y[i]) & (S == 0)] = 1         # Susceptiples together with infecting agent becomes infected
+    for i in np.where((isolated != 1) & (S == 1) & (np.random.random(n) < B))[0]:  # loop over infecting agents
+        temperatures[(x == x[i]) & (y == y[i]) & (S == 0)] = np.random.normal(40,
+                                                                              1)  # Raise newly sick agents temperatures
+        S[(x == x[i]) & (y == y[i]) & (S == 0)] = 1  # Susceptiples together with infecting agent becomes infected
     for i in np.where((S == 1) & (np.random.random(n) < My))[0]:
         S[i] = 3
     recovered_list = np.where((S == 1) & (np.random.rand(n) < G))[0]
     S[recovered_list] = 2
-    #isolated[recovered_list] = 0
-    set_temps()
-    gen_contact_i()
-    gen_contact_tot()
+    # isolated[recovered_list] = 0
+    gen_contacts()
 
 
 def set_temps():
@@ -133,13 +168,13 @@ def set_temps():
 if __name__ == '__main__':
 
     # Parameters of the simulation
-    n = 950    # Number of agents
+    n = 950  # Number of agents
     initial_infected = 40  # Initial infected agents
     N = 100000  # Simulation time
-    l = 32   # Lattice size
+    l = 32  # Lattice size
     # Historylists used for plotting SIR-graph
-    infected_history = np.array([initial_infected-1])
-    susceptible_history = np.array([n-initial_infected+1])
+    infected_history = np.array([initial_infected - 1])
+    susceptible_history = np.array([n - initial_infected + 1])
     recovered_history = np.array([0])
     dead_history = np.array([0])
     isolation_history = np.array([0])
@@ -157,22 +192,25 @@ if __name__ == '__main__':
     show_plot = Button(tk, text='Plot', command=plot_sir)
     show_plot.place(relx=0.05, rely=0.85, relheight=0.06, relwidth=0.15)
 
-    #Contact matrix
-    contact_tot = np.zeros((50, n, n), dtype = 'int16')
-    contact_i = np.zeros((50, n, n), dtype = 'int16')
+    # Contact matrix
+    contact_tot = np.zeros((50, 1, n), dtype='int16')
+    contact_i = np.zeros((50, 1, n), dtype='int16')
+    R_4 = np.zeros((10, l, l))
+    R_8 = np.zeros((10, l, l))
+    R_16 = np.zeros((10, l, l))
 
     x, y, S, isolated, temperatures, tested, nx, ny = __init__()
     # Physical parameters of the system
 
     particles = []
-    R = .5                          # agent plot radius
-    for j in range(n):     # Generate animated particles in Canvas
-        particles.append(canvas.create_oval((x[j])*res/l,
-                                             (y[j])*res/l,
-                                             (x[j]+2*R)*res/l,
-                                             (y[j]+2*R)*res/l,
-                                             outline=ccolor[0], fill=ccolor[0]))
-    #test
+    R = .5  # agent plot radius
+    for j in range(n):  # Generate animated particles in Canvas
+        particles.append(canvas.create_oval((x[j]) * res / l,
+                                            (y[j]) * res / l,
+                                            (x[j] + 2 * R) * res / l,
+                                            (y[j] + 2 * R) * res / l,
+                                            outline=ccolor[0], fill=ccolor[0]))
+    # test
     # Modifiable parameters by the user
 
     D_noll = 0.8
@@ -194,20 +232,21 @@ if __name__ == '__main__':
         update_states()
 
         for j in range(n):
-            canvas.move(particles[j], (nx[j]-x[j]) * res/l, (ny[j]-y[j])*res/l)         # Plot update - Positions
-            canvas.itemconfig(particles[j], outline='#303030', fill=ccolor[int(S[j]) if isolated[j] == 0 else 4])  # Plot update - Colors
+            canvas.move(particles[j], (nx[j] - x[j]) * res / l, (ny[j] - y[j]) * res / l)  # Plot update - Positions
+            canvas.itemconfig(particles[j], outline='#303030',
+                              fill=ccolor[int(S[j]) if isolated[j] == 0 else 4])  # Plot update - Colors
         tk.update()
         tk.title('Infected:' + str(np.sum(S == 1)) + ' Timesteps passed:' + str(t))
         test_agents()
-        
+
         # lockdown_enabled loop
         if start_lock < t < start_lock + 200 and lockdown_enabled:
             D = D_reduced
         else:
             D = D_noll
 
-        x = nx                                              # Update x
-        y = ny                                              # Update y
+        x = nx  # Update x
+        y = ny  # Update y
 
         # Used for plotting the graph
         susceptible_history = np.append(susceptible_history, len(list(np.where(S == 0)[0])))
@@ -215,10 +254,10 @@ if __name__ == '__main__':
         recovered_history = np.append(recovered_history, len(list(np.where(S == 2)[0])))
         dead_history = np.append(dead_history, len(list(np.where(S == 3)[0])))
         isolation_history = np.append(isolation_history, len(list(np.where(isolated == 1)[0])))
-        
+
         t += 1
 
         if t % 300 == 0:
             plot_sir()
 
-    Tk.mainloop(canvas)                                     # Release animation handle (close window to finish)
+    Tk.mainloop(canvas)  # Release animation handle (close window to finish)
