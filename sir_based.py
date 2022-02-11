@@ -1,8 +1,58 @@
 import numpy as np
 from tkinter import *
 import matplotlib.pyplot as plt
+import keras
+from keras.models import Sequential
+from keras.datasets import mnist
+from keras.layers import Dense, Dropout, Flatten
+from keras.layers import Conv2D, MaxPooling2D
+from keras import backend as K
+from keras.utils import np_utils #Needed to enable "to_categorical"
 
 np.seterr(invalid='ignore')
+
+
+def setupNN():
+    model = Sequential()  # Define the NN model
+    model.add(Dense(16, input_dim=5, activation='relu'))  # Add Layers
+    model.add(Dense(16, activation='relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(16, activation='relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(16, activation='relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(1, activation='softmax'))  # softmax ensures number between 0-1.
+    model.compile(loss='mean_squared_error', optimizer='adam', metrics='accuracy')
+    return model
+
+
+def trainNN(model, t):
+    if t > 20:
+        pass
+        # Setup the training lists and feed them to the NN
+        # Input för NN
+        # arry/listan för y_train består av lång lista som korresponderar till x_train där varje index är 0 för frisk eller 1 för sjuk.
+        # model.fit(x_train, y_train, epochs=100) #vilken batch size?  #Input för NN, lista, där varje plats är matrix som i artikeln
+        # model.evaluate(x_test, y_test, verbose=1)
+
+        resultNN = model.layers[
+            3].output  # Output för NN, Behöver eventuellt ändra idex beroende på om dropout räknas som lager, vill få output från softmax
+        # model.summary() Få tag i info om modellens uppbyggnad
+        return resultNN
+
+
+def deployNN(model, t):
+    if t > 20:
+        result = trainNN(model)
+
+    for n in result:
+        p = result[n]
+        if p > 0.995:
+            pass
+            # isolate agent
+            if 0.5 < p < 0.995:
+                pass
+                # add to test array and test 100 agents with the highest temperature
 
 
 def __init__():
