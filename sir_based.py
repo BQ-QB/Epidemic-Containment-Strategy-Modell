@@ -71,13 +71,13 @@ def gen_contacts():
             if (coord_list[current_agent] == coord_list[another_agent]) & (another_agent != current_agent):
                 contact_list[current_agent] += 1
 
-    contact_i[t % 10] = sick_contact_list
-    contact_tot[t % 10] = contact_list
+    contact_i[t % 50] = sick_contact_list
+    contact_tot[t % 50] = contact_list
 
-    timesum_tot = np.sum(contact_tot, 0)
-    timesum_i = np.sum(contact_i, 0)
+    total_contact_tot[t % 10] = np.sum(contact_tot, 0)
+    total_contact_i[t % 10] = np.sum(contact_i, 0)
 
-    contact_q[t % 10] = np.nan_to_num(np.divide(timesum_i, timesum_tot))
+    contact_q[t % 10] = np.nan_to_num(np.divide(total_contact_i[t % 10], total_contact_tot[t % 10]))
 
 
 def gen_R():  # testat generatorfunktion för R-matriserna
@@ -122,6 +122,7 @@ def man_made_test_agents():
                     isolated[test_person] = 1
 
             i = i + 1
+        print('Time = ', t,'Tests made: ', tests_made)
 
 
 def update_states():
@@ -176,7 +177,9 @@ if __name__ == '__main__':
     # Contact matrix
     contact_tot = np.zeros((50, n), dtype='int16')
     contact_i = np.zeros((50, n), dtype='int16')
-    contact_q = np.zeros((50, n), dtype='int16')
+    contact_q = np.zeros((50, n), dtype='float16')
+    total_contact_i = np.zeros((10, n), dtype='int16')
+    total_contact_tot = np.zeros((10, n), dtype='int16')
     R_4 = np.zeros((10, n))
     R_8 = np.zeros((10, n))
     R_16 = np.zeros((10, n))
