@@ -2,6 +2,8 @@ import numpy as np
 from tkinter import *
 import matplotlib.pyplot as plt
 
+np.seterr(invalid='ignore')
+
 
 def __init__():
     x = np.floor(np.random.rand(n) * l)  # x coordinates
@@ -31,7 +33,7 @@ def plot_sir():
     ax.plot(index_list_for_plot, recovered_history, color='green', label=label_recovered)
     ax.plot(index_list_for_plot, infected_history, color='red', label=label_infected)
     ax.plot(index_list_for_plot, dead_history, color='purple', label=label_dead)
-    # ax.plot(index_list_for_plot, isolation_history, color = 'black', label = label_isolation)
+    ax.plot(index_list_for_plot, isolation_history, color='black', label=label_isolation)
     ax.set_title('Infection plot')
     ax.legend()
     plt.show()
@@ -53,9 +55,7 @@ def gen_contacts():
     coord_list = np.zeros(n)
     contact_list = np.zeros(n)
     sick_contact_list = np.zeros(n)
-    quote_list = np.zeros(n)
-    contact_sum = np.zeros(n)
-    contact_infected_sum = np.zeros(n)
+
     for agent in range(n):
         coord_list[agent] = (2 ** x[agent]) * (3 ** y[agent])
 
@@ -71,62 +71,42 @@ def gen_contacts():
             if (coord_list[current_agent] == coord_list[another_agent]) & (another_agent != current_agent):
                 contact_list[current_agent] += 1
 
-    for agent in range(n):
-        contact_sum[agent] = np.sum(contact_list, (0))[agent]
-        contact_infected_sum = 0
+    contact_i[t % 10] = sick_contact_list
+    contact_tot[t % 10] = contact_list
 
-    contact_i[t % 50] = sick_contact_list
-    contact_quota[t % 50] = quote_list
+    timesum_tot = np.sum(contact_tot, 0)
+    timesum_i = np.sum(contact_i, 0)
+
+    contact_q[t % 10] = np.nan_to_num(np.divide(timesum_i, timesum_tot))
 
 
 def gen_R():  # testat generatorfunktion för R-matriserna
-    # nu implementerad som cirklar! Observera att koordinatsystemet har origo uppe i vänstra hörnet, så det nedre
-    # högra hörnet har koordinater (l,l)
-    R_16[t % 10] = np.zeros((l, l))
-    R_8[t % 10] = np.zeros((l, l))
-    R_4[t % 10] = np.zeros((l, l))
-    for sick_agents in np.where(S == 1)[0]:
-        xp = x[sick_agents]
-        yp = y[sick_agents]
+    # nu implementerad som cirklar!
 
-        for i in range(17):
-            if xp + i < l:
-                for j in range(17):
-                    if (yp + j < l) & ((j) ** 2 + (i) ** 2 <= 16 ** 2):
-                        R_16[t % 10][yp + j][xp + i] += 1
-                        if ((j) ** 2 + (i) ** 2 <= 8 ** 2):
-                            R_8[t % 10][yp + j][xp + i] += 1
-                        if ((j) ** 2 + (i) ** 2 <= 4 ** 2):
-                            R_4[t % 10][yp + j][xp + i] += 1
-                    if (yp - j >= 0) & ((j) ** 2 + (i) ** 2 <= 16 ** 2) & (j != 0):
-                        R_16[t % 10][yp - j][xp + i] += 1
-                        if ((j) ** 2 + (i) ** 2 <= 8 ** 2):
-                            R_8[t % 10][yp - j][xp + i] += 1
-                        if ((j) ** 2 + (i) ** 2 <= 4 ** 2):
-                            R_4[t % 10][yp - j][xp + i] += 1
-            if (xp - i >= 0) & (i != 0):
-                for j in range(17):
-                    if (yp + j < l) & ((j) ** 2 + (i) ** 2 <= 16 ** 2):
-                        R_16[t % 10][yp + j][xp - i] += 1
-                        if ((j) ** 2 + (i) ** 2 <= 8 ** 2):
-                            R_8[t % 10][yp + j][xp - i] += 1
-                        if ((j) ** 2 + (i) ** 2 <= 4 ** 2):
-                            R_4[t % 10][yp + j][xp - i] += 1
-                    if (yp - j >= 0) & ((j) ** 2 + (i) ** 2 <= 16 ** 2) & (j != 0):
-                        R_16[t % 10][yp - j][xp - i] += 1
-                        if ((j) ** 2 + (i) ** 2 <= 8 ** 2):
-                            R_8[t % 10][yp - j][xp - i] += 1
-                        if ((j) ** 2 + (i) ** 2 <= 4 ** 2):
-                            R_4[t % 10][yp - j][xp - i] += 1
+    R_16[t % 10] = np.zeros(n)
+    R_8[t % 10] = np.zeros(n)
+    R_4[t % 10] = np.zeros(n)
+    for agents in range(n):
+        x_agent = x[agents]
+        y_agent = y[agents]
+        for sick_agents in np.where(S == 1)[0]:
+            x_sick = x[sick_agents]
+            y_sick = y[sick_agents]
+            if (x_agent - x_sick) ** 2 + (y_agent - y_sick) ** 2 <= 16 ** 2:
+                R_16[t % 10][agents] += 1
+                if (x_agent - x_sick) ** 2 + (y_agent - y_sick) ** 2 <= 8 ** 2:
+                    R_8[t % 10][agents] += 1
+                    if (x_agent - x_sick) ** 2 + (y_agent - y_sick) ** 2 <= 4 ** 2:
+                        R_4[t % 10][agents] += 1
 
 
-def test_agents():
+def man_made_test_agents():
     # Tests sick agents, if positive test then set in isolation and isolate neighbours in contactmatrix
     if t > 20:
-        contact_i_rowsums = np.sum(contact_i, (0, 2))
+
         d_type = [('Clist', np.int16), ('Temp', np.float16)]
         test_priority = np.zeros((n,), dtype=d_type)
-        test_priority['Clist'] = contact_i_rowsums
+        test_priority['Clist'] = contact_i[t % 10]
         test_priority['Temp'] = temperatures
         test_priority = np.argsort(test_priority, order=('Clist', 'Temp'))
 
@@ -155,6 +135,7 @@ def update_states():
     S[recovered_list] = 2
     # isolated[recovered_list] = 0
     gen_contacts()
+    gen_R()
 
 
 def set_temps():
@@ -168,10 +149,10 @@ def set_temps():
 if __name__ == '__main__':
 
     # Parameters of the simulation
-    n = 950  # Number of agents
-    initial_infected = 40  # Initial infected agents
+    n = 800  # Number of agents
+    initial_infected = 10  # Initial infected agents
     N = 100000  # Simulation time
-    l = 32  # Lattice size
+    l = 30  # Lattice size
     # Historylists used for plotting SIR-graph
     infected_history = np.array([initial_infected - 1])
     susceptible_history = np.array([n - initial_infected + 1])
@@ -193,11 +174,12 @@ if __name__ == '__main__':
     show_plot.place(relx=0.05, rely=0.85, relheight=0.06, relwidth=0.15)
 
     # Contact matrix
-    contact_tot = np.zeros((50, 1, n), dtype='int16')
-    contact_i = np.zeros((50, 1, n), dtype='int16')
-    R_4 = np.zeros((10, l, l))
-    R_8 = np.zeros((10, l, l))
-    R_16 = np.zeros((10, l, l))
+    contact_tot = np.zeros((50, n), dtype='int16')
+    contact_i = np.zeros((50, n), dtype='int16')
+    contact_q = np.zeros((50, n), dtype='int16')
+    R_4 = np.zeros((10, n))
+    R_8 = np.zeros((10, n))
+    R_16 = np.zeros((10, n))
 
     x, y, S, isolated, temperatures, tested, nx, ny = __init__()
     # Physical parameters of the system
@@ -237,7 +219,7 @@ if __name__ == '__main__':
                               fill=ccolor[int(S[j]) if isolated[j] == 0 else 4])  # Plot update - Colors
         tk.update()
         tk.title('Infected:' + str(np.sum(S == 1)) + ' Timesteps passed:' + str(t))
-        test_agents()
+        man_made_test_agents()
 
         # lockdown_enabled loop
         if start_lock < t < start_lock + 200 and lockdown_enabled:
