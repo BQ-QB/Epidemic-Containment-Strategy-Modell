@@ -1,6 +1,7 @@
 import numpy as np
 from tkinter import *
 import matplotlib.pyplot as plt
+"""
 import keras
 from keras.models import Sequential
 from keras.datasets import mnist
@@ -53,7 +54,7 @@ def deployNN(model, t):
             if 0.5 < p < 0.995:
                 pass
                 # add to test array and test 100 agents with the highest temperature
-
+"""
 
 def __init__():
     x = np.floor(np.random.rand(n) * l)  # x coordinates
@@ -235,6 +236,21 @@ if __name__ == '__main__':
     initial_infected = 10  # Initial infected agents
     N = 100000  # Simulation time
     l = 30  # Lattice size
+
+    D_noll = 0.8
+    D_reduced = 0.1
+
+    D = D_noll
+    B = 0.6
+    G = 0.03
+
+    My = 0.00
+    start_lock = 50
+    lockdown_enabled = False
+    test_capacity = 30
+    
+    t = 0
+
     # Historylists used for plotting SIR-graph
     infected_history = np.array([initial_infected - 1])
     susceptible_history = np.array([n - initial_infected + 1])
@@ -244,6 +260,28 @@ if __name__ == '__main__':
 
     #initiate the lists
     x, y, S, isolated, temperatures, tested, nx, ny = __init__()
+    set_temps()
+
+
+    # Contact matrix
+    contact_tot = np.zeros((50, n), dtype='int16')
+    contact_i = np.zeros((50, n), dtype='int16')
+    contact_q = np.zeros((50, n), dtype='float16')
+    total_contact_i = np.zeros((10, n), dtype='int16')
+    total_contact_tot = np.zeros((10, n), dtype='int16')
+    R_4 = np.zeros((10, n))
+    R_8 = np.zeros((10, n))
+    R_16 = np.zeros((10, n))
+
+    information_tensor = np.zeros((20*test_capacity, 5, 10))
+    test_results = np.zeros((20*test_capacity))
+
+    # output_results = np.zeros(n)
+
+    index_list = np.zeros((150*test_capacity))
+
+
+    # Canvas info
 
     res = 500  # Animation resolution
     tk = Tk()
@@ -258,16 +296,7 @@ if __name__ == '__main__':
     show_plot = Button(tk, text='Plot', command=plot_sir)
     show_plot.place(relx=0.05, rely=0.85, relheight=0.06, relwidth=0.15)
 
-    # Contact matrix
-    contact_tot = np.zeros((50, n), dtype='int16')
-    contact_i = np.zeros((50, n), dtype='int16')
-    contact_q = np.zeros((50, n), dtype='float16')
-    total_contact_i = np.zeros((10, n), dtype='int16')
-    total_contact_tot = np.zeros((10, n), dtype='int16')
-    R_4 = np.zeros((10, n))
-    R_8 = np.zeros((10, n))
-    R_16 = np.zeros((10, n))
-
+    
 
     particles = []
     R = .5  # agent plot radius
@@ -277,22 +306,10 @@ if __name__ == '__main__':
                                             (x[j] + 2 * R) * res / l,
                                             (y[j] + 2 * R) * res / l,
                                             outline=ccolor[0], fill=ccolor[0]))
-    # test
+
     # Modifiable parameters by the user
 
-    D_noll = 0.8
-    D_reduced = 0.1
-
-    D = D_noll
-    B = 0.6
-    G = 0.03
-
-    My = 0.00
-    start_lock = 50
-    lockdown_enabled = False
-    test_capacity = 30
-    set_temps()
-    t = 0
+    
 
     while t < 1000 and list(np.where(S == 1)[0]):
         nx, ny = update_position()
