@@ -125,14 +125,10 @@ def gen_contacts():
     contact_i[t % 50] = sick_contact_list
     contact_tot[t % 50] = contact_list
 
-    total_contact_tot[t % 10] = np.sum(contact_tot, 0)
-    total_contact_i[t % 10] = np.sum(contact_i, 0)
-
-    contact_q[t % 10] = np.nan_to_num(np.divide(total_contact_i[t % 10], total_contact_tot[t % 10]))
+    contact_q[t % 10] = np.nan_to_num(np.divide(np.sum(contact_i, 0),np.sum(contact_tot, 0)))
 
 
-def gen_R():  # testat generatorfunktion för R-matriserna
-    # nu implementerad som cirklar!
+def gen_R():  # Generatorfunktion för R-matriserna
 
     R_16[t % 10] = np.zeros(n)
     R_8[t % 10] = np.zeros(n)
@@ -171,7 +167,7 @@ def gen_information_to_peter():
   CR_tensor = np.zeros(test_capacity,5,10)
   
   for i in range(30):
-    CR_tensor[i] = [R_4[start_time:t%10], R_8[start_time:t%10], R_16[start_time:t%10], total_contact_i[start_time:t%10], contact_q[start_time:t%10]]
+    CR_tensor[i] = [R_4[start_time:t%10], R_8[start_time:t%10], R_16[start_time:t%10], np.sum(contact_i[start_time:t%10],0), contact_q[start_time:t%10]]
   if t>20:
     information_tensor = np.append(information_tensor, CR_tensor)
   else: information_tensor[t*test_capacity:(t+1)*test_capacity] = CR_tensor
@@ -209,8 +205,7 @@ def man_made_test_agents():
 
 def update_states():
     for i in np.where((isolated != 1) & (S == 1) & (np.random.random(n) < B))[0]:  # loop over infecting agents
-        temperatures[(x == x[i]) & (y == y[i]) & (S == 0)] = np.random.normal(40,
-                                                                              1)  # Raise newly sick agents temperatures
+        temperatures[(x == x[i]) & (y == y[i]) & (S == 0)] = np.random.normal(40,1)  # Raise newly sick agents temperatures
         S[(x == x[i]) & (y == y[i]) & (S == 0)] = 1  # Susceptiples together with infecting agent becomes infected
     for i in np.where((S == 1) & (np.random.random(n) < My))[0]:
         S[i] = 3
@@ -234,9 +229,9 @@ if __name__ == '__main__':
     # Parameters of the simulation
     n = 800  # Number of agents
     initial_infected = 10  # Initial infected agents
-    N = 100000  # Simulation time
+    N = 1000  # Simulation time
     l = 30  # Lattice size
-
+   
     D_noll = 0.8
     D_reduced = 0.1
 
@@ -267,8 +262,6 @@ if __name__ == '__main__':
     contact_tot = np.zeros((50, n), dtype='int16')
     contact_i = np.zeros((50, n), dtype='int16')
     contact_q = np.zeros((50, n), dtype='float16')
-    total_contact_i = np.zeros((10, n), dtype='int16')
-    total_contact_tot = np.zeros((10, n), dtype='int16')
     R_4 = np.zeros((10, n))
     R_8 = np.zeros((10, n))
     R_16 = np.zeros((10, n))
@@ -279,6 +272,14 @@ if __name__ == '__main__':
     # output_results = np.zeros(n)
 
     index_list = np.zeros((150*test_capacity))
+
+    # Plot list
+
+    susceptible_history =  np.zeros(N)
+    infected_history = np.zeros(N)
+    recovered_history = np.zeros(N)
+    dead_history =  np.zeros(N)
+    isolation_history = np.zeros(N)
 
 
     # Canvas info
@@ -333,11 +334,11 @@ if __name__ == '__main__':
         y = ny  # Update y
 
         # Used for plotting the graph
-        susceptible_history = np.append(susceptible_history, len(list(np.where(S == 0)[0])))
-        infected_history = np.append(infected_history, len(list(np.where(S == 1)[0])))
-        recovered_history = np.append(recovered_history, len(list(np.where(S == 2)[0])))
-        dead_history = np.append(dead_history, len(list(np.where(S == 3)[0])))
-        isolation_history = np.append(isolation_history, len(list(np.where(isolated == 1)[0])))
+        susceptible_history[t] =  len(list(np.where(S == 0)[0]))
+        infected_history[t] = len(list(np.where(S == 1)[0]))
+        recovered_history[t] = len(list(np.where(S == 2)[0]))
+        dead_history[t] =  len(list(np.where(S == 3)[0]))
+        isolation_history[t] = len(list(np.where(isolated == 1)[0]))
 
         t += 1
 

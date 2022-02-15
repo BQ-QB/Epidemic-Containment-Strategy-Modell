@@ -70,20 +70,19 @@ def __init__():
 
 # Plots graph
 def plot_sir():
-    index_list_for_plot = susceptible_history.shape[0]
-    index_list_for_plot = np.array([i for i in range(index_list_for_plot)])
+    index_list_for_plot = np.array([i for i in range(t)])
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
-    label_susceptible = 'Susceptible = ' + str(susceptible_history[-1])
-    label_recovered = 'Recovered = ' + str(recovered_history[-1])
-    label_infected = 'Infected = ' + str(infected_history[-1])
-    label_dead = 'Dead = ' + str(dead_history[-1])
-    label_isolation = 'Isolation = ' + str(isolation_history[-1])
-    ax.plot(index_list_for_plot, susceptible_history, color='blue', label=label_susceptible)
-    ax.plot(index_list_for_plot, recovered_history, color='green', label=label_recovered)
-    ax.plot(index_list_for_plot, infected_history, color='red', label=label_infected)
-    ax.plot(index_list_for_plot, dead_history, color='purple', label=label_dead)
-    ax.plot(index_list_for_plot, isolation_history, color='black', label=label_isolation)
+    label_susceptible = 'Susceptible = ' + str(susceptible_history[t-1])
+    label_recovered = 'Recovered = ' + str(recovered_history[t-1])
+    label_infected = 'Infected = ' + str(infected_history[t-1])
+    label_dead = 'Dead = ' + str(dead_history[t-1])
+    label_isolation = 'Isolation = ' + str(isolation_history[t-1])
+    ax.plot(index_list_for_plot, susceptible_history[:t], color='blue', label=label_susceptible)
+    ax.plot(index_list_for_plot, recovered_history[:t], color='green', label=label_recovered)
+    ax.plot(index_list_for_plot, infected_history[:t], color='red', label=label_infected)
+    ax.plot(index_list_for_plot, dead_history[:t], color='purple', label=label_dead)
+    ax.plot(index_list_for_plot, isolation_history[:t], color='black', label=label_isolation)
     ax.set_title('Infection plot')
     ax.legend()
     plt.show()
@@ -279,7 +278,13 @@ if __name__ == '__main__':
     # output_results = np.zeros(n)
 
     index_list = np.zeros((150*test_capacity))
-       
+    # Plot list
+
+    susceptible_history =  np.zeros(300)
+    infected_history = np.zeros(300)
+    recovered_history = np.zeros(300)
+    dead_history =  np.zeros(300)
+    isolation_history = np.zeros(300)
     
 
     while t < 1000 and list(np.where(S == 1)[0]):
@@ -298,12 +303,11 @@ if __name__ == '__main__':
         y = ny  # Update y
 
         # Used for plotting the graph
-        susceptible_history = np.append(susceptible_history, len(list(np.where(S == 0)[0])))
-        infected_history = np.append(infected_history, len(list(np.where(S == 1)[0])))
-        recovered_history = np.append(recovered_history, len(list(np.where(S == 2)[0])))
-        dead_history = np.append(dead_history, len(list(np.where(S == 3)[0])))
-        isolation_history = np.append(isolation_history, len(list(np.where(isolated == 1)[0])))
-
+        susceptible_history[t] = (len(list(np.where(S == 0)[0])))
+        infected_history[t] = len(list(np.where(S == 1)[0]))
+        recovered_history[t] = len(list(np.where(S == 2)[0]))
+        dead_history[t] =  len(list(np.where(S == 3)[0]))
+        isolation_history[t] = len(list(np.where(isolated == 1)[0]))
         t += 1
 
         if t % 10 == 0:
