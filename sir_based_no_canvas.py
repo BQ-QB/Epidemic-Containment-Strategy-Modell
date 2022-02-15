@@ -2,8 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-# test
-
 """
 import keras
 from keras.models import Sequential
@@ -100,18 +98,14 @@ def update_position():
     ny = (y + np.sign(np.random.randn(n)) * steps_y) % l  
     for i in np.where(((isolated != 0) | (S == 3)))[0]:
         nx[i] = x[i]
-        ny[i] = y[i]
-    
+        ny[i] = y[i] 
     return nx, ny
 
-
-
 def gen_contacts():
-       
-    
+
+    t3 = time.time()
     contact_list = np.zeros(n)
     sick_contact_list = np.zeros(n)
-
     coord_list = np.array([2**x[i] * 3**y[i] for i in range(n)])
     
     for infected in np.where((S == 1) & (isolated != 1))[0]:
@@ -121,7 +115,7 @@ def gen_contacts():
                 sick_contact_list[other_agent] += 1
             
     for i in range(n):
-        for hits in np.where((x[i] == x) & (y[i] == y) &(isolated != 1))[0]:
+        for hits in np.where((x[i] == x) & (y[i] == y) & (isolated != 1))[0]:
             contact_list[i] += 1
     
     """
@@ -139,41 +133,47 @@ def gen_contacts():
     total_contact_i[t % 10] = np.sum(contact_i, 0)
 
     contact_q[t % 10] = np.nan_to_num(np.divide(total_contact_i[t % 10], total_contact_tot[t % 10]))
+    print("Time taken at gen_contacts at timestep ", t, "was equal to ", time.time()-t3)
     
 
 
-def gen_R():  # Generatorfunktion för R-matriserna
-   
+def gen_R():  # Generatorfunktion för R-matriserna. Återfår samma resultat som tidigare implementationen, fast mycket snabbare
+    t2 = time.time()
     # Behöver nollställa matriselementen inför tidssteget
-    R_16[t % 10] = np.zeros(n)
-    R_8[t % 10] = np.zeros(n)
-    R_4[t % 10] = np.zeros(n)
+    temp_r16 = np.zeros(n)
+    temp_r8 = np.zeros(n)
+    temp_r4 = np.zeros(n)
     r16_squared = 256
     r8_squared = 64
     r4_squared = 16
-    t1 = time.time()
+
+    
     sick_list = np.where((S==1)&(isolated !=1))[0]
     xy_array = np.array([[x[i],y[i]] for i in range(n)])
-    print(xy_array)
-    [[1,2],
-    [2,1],
-    [3,1]]
-    for agents in range(n):
-        x_agent = x[agents]
-        y_agent = y[agents]
-        for sick_agents in sick_list:
-            x_sick = x[sick_agents]
-            y_sick = y[sick_agents]
-            radial_distance =  (x_agent - x_sick) ** 2 + (y_agent - y_sick) ** 2
 
-            if radial_distance <= r16_squared:
-                R_16[t % 10][agents] += 1
-                if radial_distance <= r8_squared:
-                    R_8[t % 10][agents] += 1
-                    if radial_distance <= r4_squared:
-                        R_4[t % 10][agents] += 1
+    for sickos in sick_list:
+        sick_coords = np.array([x[sickos], y[sickos]])
 
-    print("Gen R was completed for timestep ", t, " in a time of ", time.time()-t1)
+        list_of_16_hits = np.where(np.sum((xy_array-sick_coords)**2 , axis = 1)<=r16_squared)
+        list_of_8_hits = np.where(np.sum((xy_array-sick_coords)**2 , axis = 1)<=r8_squared)
+        list_of_4_hits = np.where(np.sum((xy_array-sick_coords)**2 , axis = 1)<=r4_squared)
+
+        temp_r16[list_of_16_hits] +=1
+        temp_r8[list_of_8_hits] +=1
+        temp_r4[list_of_4_hits] +=1
+    
+    # It should not count itself as a person in its vacinity, so remove 1 from the sick indexes
+    temp_r16[sick_list] -= 1
+    temp_r8[sick_list]  -= 1
+    temp_r4[sick_list]  -= 1
+
+    R_16[t%10] = temp_r16
+    R_8[t%10] = temp_r8
+    R_4[t%10] = temp_r4
+
+    print("Gen R was completed for timestep ", t, " in a time of ", time.time()-t2)
+
+       
 
 def initial_testing():
   t1 = time.time()  
@@ -260,10 +260,10 @@ def set_temps():
 if __name__ == '__main__':
     
     # Parameters of the simulation
-    n = 800  # Number of agents
-    initial_infected = 10  # Initial infected agents
+    n = 10000  # Number of agents
+    initial_infected = 100  # Initial infected agents
     N = 100000  # Simulation time
-    l = 30  # Lattice size
+    l = 100  # Lattice size
 
     # Modifiable parameters by the user
 
@@ -334,8 +334,5 @@ if __name__ == '__main__':
         isolation_history[t] = len(list(np.where(isolated == 1)[0]))
         t += 1
         print("For timestep" ,t-1,", Time spent on this iteration was", time.time() - t1)
-        if t % 10 == 0:
+        if t % 50 == 0:
             plot_sir()
-    
-
-   
