@@ -246,12 +246,6 @@ if __name__ == '__main__':
     
     t = 0
 
-    # Historylists used for plotting SIR-graph
-    infected_history = np.array([initial_infected - 1])
-    susceptible_history = np.array([n - initial_infected + 1])
-    recovered_history = np.array([0])
-    dead_history = np.array([0])
-    isolation_history = np.array([0])
 
     #initiate the lists
     x, y, S, isolated, temperatures, tested, nx, ny = __init__()
