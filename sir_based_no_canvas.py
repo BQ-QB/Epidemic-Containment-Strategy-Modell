@@ -1,7 +1,6 @@
 import numpy as np
-from tkinter import *
 import matplotlib.pyplot as plt
-import tensorflow
+"""
 import keras
 from keras.models import Sequential
 from keras.datasets import mnist
@@ -9,10 +8,10 @@ from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 from keras import backend as K
 from keras.utils import np_utils #Needed to enable "to_categorical"
-
+"""
 np.seterr(invalid='ignore')
 
-
+"""
 def setupNN():
     model = Sequential()  # Define the NN model
     model.add(Dense(16, input_dim=5, activation='relu'))  # Add Layers
@@ -28,7 +27,7 @@ def setupNN():
 
 
 def trainNN(model, t):
-    if t > 20:
+    if t > 19:
         pass
         # Setup the training lists and feed them to the NN
         # Input för NN
@@ -54,7 +53,7 @@ def deployNN(model, t):
             if 0.5 < p < 0.995:
                 pass
                 # add to test array and test 100 agents with the highest temperature
-
+"""
 
 def __init__():
     x = np.floor(np.random.rand(n) * l)  # x coordinates
@@ -150,6 +149,37 @@ def gen_R():  # testat generatorfunktion för R-matriserna
                     if (x_agent - x_sick) ** 2 + (y_agent - y_sick) ** 2 <= 4 ** 2:
                         R_4[t % 10][agents] += 1
 
+def initial_testing():
+  test_priority = np.argsort(temperatures)
+  test_priority = test_priority[-100:-1]
+  rand_selected = np.random.randint(0,100,test_capacity)
+  to_be_tested = test_priority[rand_selected]
+  testing_outcome = np.zeros(test_capacity)
+  for agents in to_be_tested: 
+    if S[agents] == 1:
+      testing_outcome[agents] = 1
+
+    test_results[t*test_capacity : (t+1)*test_capacity] = testing_outcome
+  
+  index_list[t*test_capacity:(t+1)*test_capacity] = to_be_tested
+
+def gen_information_to_peter():
+  agent_to_peter_index = index_list[t*test_capacity:(t+1)*test_capacity]
+  start_time = max(0, (t-9)%10)
+
+  CR_tensor = np.zeros(test_capacity,5,10)
+  
+  for i in range(30):
+    CR_tensor[i] = [R_4[start_time:t%10], R_8[start_time:t%10], R_16[start_time:t%10], total_contact_i[start_time:t%10], contact_q[start_time:t%10]]
+  if t>20:
+    information_tensor = np.append(information_tensor, CR_tensor)
+  else: information_tensor[t*test_capacity:(t+1)*test_capacity] = CR_tensor
+
+def peter_test(peter_test_list):
+  pass
+
+def peter_isolate(peter_isolate_list):
+  pass
 
 def man_made_test_agents():
     # Tests sick agents, if positive test then set in isolation and isolate neighbours in contactmatrix
@@ -199,54 +229,13 @@ def set_temps():
 
 
 if __name__ == '__main__':
-
+   
     # Parameters of the simulation
     n = 800  # Number of agents
     initial_infected = 10  # Initial infected agents
     N = 100000  # Simulation time
     l = 30  # Lattice size
-    # Historylists used for plotting SIR-graph
-    infected_history = np.array([initial_infected - 1])
-    susceptible_history = np.array([n - initial_infected + 1])
-    recovered_history = np.array([0])
-    dead_history = np.array([0])
-    isolation_history = np.array([0])
 
-    res = 500  # Animation resolution
-    tk = Tk()
-    tk.geometry(str(int(res * 1.1)) + 'x' + str(int(res * 1.3)))
-    tk.configure(background='white')
-
-    canvas = Canvas(tk, bd=2)  # Generate animation window
-    tk.attributes('-topmost', 0)
-    canvas.place(x=res / 20, y=res / 20, height=res, width=res)
-    ccolor = ['#0008FF', '#DB0000', '#12F200', '#68228B', '#000000']
-
-    show_plot = Button(tk, text='Plot', command=plot_sir)
-    show_plot.place(relx=0.05, rely=0.85, relheight=0.06, relwidth=0.15)
-
-    # Contact matrix
-    contact_tot = np.zeros((50, n), dtype='int16')
-    contact_i = np.zeros((50, n), dtype='int16')
-    contact_q = np.zeros((50, n), dtype='float16')
-    total_contact_i = np.zeros((10, n), dtype='int16')
-    total_contact_tot = np.zeros((10, n), dtype='int16')
-    R_4 = np.zeros((10, n))
-    R_8 = np.zeros((10, n))
-    R_16 = np.zeros((10, n))
-
-    x, y, S, isolated, temperatures, tested, nx, ny = __init__()
-    # Physical parameters of the system
-
-    particles = []
-    R = .5  # agent plot radius
-    for j in range(n):  # Generate animated particles in Canvas
-        particles.append(canvas.create_oval((x[j]) * res / l,
-                                            (y[j]) * res / l,
-                                            (x[j] + 2 * R) * res / l,
-                                            (y[j] + 2 * R) * res / l,
-                                            outline=ccolor[0], fill=ccolor[0]))
-    # test
     # Modifiable parameters by the user
 
     D_noll = 0.8
@@ -260,21 +249,45 @@ if __name__ == '__main__':
     start_lock = 50
     lockdown_enabled = False
     test_capacity = 30
+    x, y, S, isolated, temperatures, tested, nx, ny = __init__()
+
     set_temps()
     t = 0
+
+
+    # Historylists used for plotting SIR-graph
+    infected_history = np.array([initial_infected - 1])
+    susceptible_history = np.array([n - initial_infected + 1])
+    recovered_history = np.array([0])
+    dead_history = np.array([0])
+    isolation_history = np.array([0])
+   
+
+    # Contact matrix
+    contact_tot = np.zeros((50, n), dtype='int16')
+    contact_i = np.zeros((50, n), dtype='int16')
+    contact_q = np.zeros((50, n), dtype='float16')
+    total_contact_i = np.zeros((10, n), dtype='int16')
+    total_contact_tot = np.zeros((10, n), dtype='int16')
+    R_4 = np.zeros((10, n))
+    R_8 = np.zeros((10, n))
+    R_16 = np.zeros((10, n))
+
+    information_tensor = np.zeros((20*test_capacity, 5, 10))
+    test_results = np.zeros((20*test_capacity))
+
+    # output_results = np.zeros(n)
+
+    index_list = np.zeros((150*test_capacity))
+       
+    
 
     while t < 1000 and list(np.where(S == 1)[0]):
         nx, ny = update_position()
         update_states()
-
-        for j in range(n):
-            canvas.move(particles[j], (nx[j] - x[j]) * res / l, (ny[j] - y[j]) * res / l)  # Plot update - Positions
-            canvas.itemconfig(particles[j], outline='#303030',
-                              fill=ccolor[int(S[j]) if isolated[j] == 0 else 4])  # Plot update - Colors
-        tk.update()
-        tk.title('Infected:' + str(np.sum(S == 1)) + ' Timesteps passed:' + str(t))
         man_made_test_agents()
 
+        
         # lockdown_enabled loop
         if start_lock < t < start_lock + 200 and lockdown_enabled:
             D = D_reduced
@@ -293,7 +306,8 @@ if __name__ == '__main__':
 
         t += 1
 
-        if t % 300 == 0:
+        if t % 10 == 0:
             plot_sir()
+    
 
-    Tk.mainloop(canvas)  # Release animation handle (close window to finish)
+   
