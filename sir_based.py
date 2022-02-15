@@ -1,7 +1,6 @@
 import numpy as np
 from tkinter import *
 import matplotlib.pyplot as plt
-import tensorflow
 import keras
 from keras.models import Sequential
 from keras.datasets import mnist
@@ -150,6 +149,37 @@ def gen_R():  # testat generatorfunktion för R-matriserna
                     if (x_agent - x_sick) ** 2 + (y_agent - y_sick) ** 2 <= 4 ** 2:
                         R_4[t % 10][agents] += 1
 
+def initial_testing():
+  test_priority = np.argsort(temperatures)
+  test_priority = test_priority[-100:-1]
+  rand_selected = np.random.randint(0,100,test_capacity)
+  to_be_tested = test_priority[rand_selected]
+  testing_outcome = np.zeros(test_capacity)
+  for agents in to_be_tested: 
+    if S[agents] == 1:
+      testing_outcome[agents] = 1
+
+    test_results[t*test_capacity : (t+1)*test_capacity] = testing_outcome
+  
+  index_list[t*test_capacity:(t+1)*test_capacity] = to_be_tested
+
+def gen_information_to_peter():
+  agent_to_peter_index = index_list[t*test_capacity:(t+1)*test_capacity]
+  start_time = max(0, (t-9)%10)
+
+  CR_tensor = np.zeros(test_capacity,5,10)
+  
+  for i in range(30):
+    CR_tensor[i] = [R_4[start_time:t%10], R_8[start_time:t%10], R_16[start_time:t%10], total_contact_i[start_time:t%10], contact_q[start_time:t%10]]
+  if t>20:
+    information_tensor = np.append(information_tensor, CR_tensor)
+  else: information_tensor[t*test_capacity:(t+1)*test_capacity] = CR_tensor
+
+def peter_test(peter_test_list):
+  pass
+
+def peter_isolate(peter_isolate_list):
+  pass
 
 def man_made_test_agents():
     # Tests sick agents, if positive test then set in isolation and isolate neighbours in contactmatrix
@@ -212,6 +242,9 @@ if __name__ == '__main__':
     dead_history = np.array([0])
     isolation_history = np.array([0])
 
+    #initiate the lists
+    x, y, S, isolated, temperatures, tested, nx, ny = __init__()
+
     res = 500  # Animation resolution
     tk = Tk()
     tk.geometry(str(int(res * 1.1)) + 'x' + str(int(res * 1.3)))
@@ -235,8 +268,6 @@ if __name__ == '__main__':
     R_8 = np.zeros((10, n))
     R_16 = np.zeros((10, n))
 
-    x, y, S, isolated, temperatures, tested, nx, ny = __init__()
-    # Physical parameters of the system
 
     particles = []
     R = .5  # agent plot radius
