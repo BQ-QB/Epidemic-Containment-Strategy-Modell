@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 # test
 
@@ -96,32 +97,40 @@ def update_position():
     steps_x = steps_x_or_y < D / 2
     steps_y = (steps_x_or_y > D / 2) & (steps_x_or_y < D)
     nx = (x + np.sign(np.random.randn(n)) * steps_x) % l
-    ny = (y + np.sign(np.random.randn(n)) * steps_y) % l
+    ny = (y + np.sign(np.random.randn(n)) * steps_y) % l  
     for i in np.where(((isolated != 0) | (S == 3)))[0]:
         nx[i] = x[i]
         ny[i] = y[i]
+    
     return nx, ny
 
 
+
 def gen_contacts():
-    coord_list = np.zeros(n)
+       
+    
     contact_list = np.zeros(n)
     sick_contact_list = np.zeros(n)
 
-    for agent in range(n):
-        coord_list[agent] = (2 ** x[agent]) * (3 ** y[agent])
-
-    for infected in np.argsort(np.where((S == 1) & (isolated != 1))[0]):
+    coord_list = np.array([2**x[i] * 3**y[i] for i in range(n)])
+    
+    for infected in np.where((S == 1) & (isolated != 1))[0]:
         infected_agent = infected
-        for other_agent in np.where(((S == 1) | (S == 0)) & (isolated == 0))[0]:
+        for other_agent in np.where((S == 1 ) & (isolated == 0))[0]:
             if (coord_list[infected_agent] == coord_list[other_agent]) & (infected_agent != other_agent):
                 sick_contact_list[other_agent] += 1
-
+            
+    for i in range(n):
+        for hits in np.where((x[i] == x) & (y[i] == y) &(isolated != 1))[0]:
+            contact_list[i] += 1
+    
+    """
     for agent in range(n):
         current_agent = agent
         for another_agent in range(n):
             if (coord_list[current_agent] == coord_list[another_agent]) & (another_agent != current_agent):
                 contact_list[current_agent] += 1
+    """
 
     contact_i[t % 50] = sick_contact_list
     contact_tot[t % 50] = contact_list
@@ -130,40 +139,58 @@ def gen_contacts():
     total_contact_i[t % 10] = np.sum(contact_i, 0)
 
     contact_q[t % 10] = np.nan_to_num(np.divide(total_contact_i[t % 10], total_contact_tot[t % 10]))
+    
 
 
-def gen_R():  # testat generatorfunktion för R-matriserna
-    # nu implementerad som cirklar!
-
+def gen_R():  # Generatorfunktion för R-matriserna
+   
+    # Behöver nollställa matriselementen inför tidssteget
     R_16[t % 10] = np.zeros(n)
     R_8[t % 10] = np.zeros(n)
     R_4[t % 10] = np.zeros(n)
+    r16_squared = 256
+    r8_squared = 64
+    r4_squared = 16
+    t1 = time.time()
+    sick_list = np.where((S==1)&(isolated !=1))[0]
+    xy_array = np.array([[x[i],y[i]] for i in range(n)])
+    print(xy_array)
+    [[1,2],
+    [2,1],
+    [3,1]]
     for agents in range(n):
         x_agent = x[agents]
         y_agent = y[agents]
-        for sick_agents in np.where(S == 1)[0]:
+        for sick_agents in sick_list:
             x_sick = x[sick_agents]
             y_sick = y[sick_agents]
-            if (x_agent - x_sick) ** 2 + (y_agent - y_sick) ** 2 <= 16 ** 2:
+            radial_distance =  (x_agent - x_sick) ** 2 + (y_agent - y_sick) ** 2
+
+            if radial_distance <= r16_squared:
                 R_16[t % 10][agents] += 1
-                if (x_agent - x_sick) ** 2 + (y_agent - y_sick) ** 2 <= 8 ** 2:
+                if radial_distance <= r8_squared:
                     R_8[t % 10][agents] += 1
-                    if (x_agent - x_sick) ** 2 + (y_agent - y_sick) ** 2 <= 4 ** 2:
+                    if radial_distance <= r4_squared:
                         R_4[t % 10][agents] += 1
 
+    print("Gen R was completed for timestep ", t, " in a time of ", time.time()-t1)
+
 def initial_testing():
+  t1 = time.time()  
   test_priority = np.argsort(temperatures)
   test_priority = test_priority[-100:-1]
-  rand_selected = np.random.randint(0,100,test_capacity)
+  rand_selected = np.random.randint(0,99,test_capacity)
   to_be_tested = test_priority[rand_selected]
   testing_outcome = np.zeros(test_capacity)
-  for agents in to_be_tested: 
-    if S[agents] == 1:
-      testing_outcome[agents] = 1
+  for agents in range(test_capacity): 
+    if S[to_be_tested[agents]] == 1:
+      #testing_outcome[agents] = 1
+      isolated[to_be_tested[agents]] = 1
 
-    test_results[t*test_capacity : (t+1)*test_capacity] = testing_outcome
+  #test_results[t*test_capacity : (t+1)*test_capacity] = testing_outcome
   
-  index_list[t*test_capacity:(t+1)*test_capacity] = to_be_tested
+  #index_list[t*test_capacity:(t+1)*test_capacity] = to_be_tested
+  print("Time taken by initial testing at t = ", t, "was ", time.time()-t1)
 
 def gen_information_to_peter():
   agent_to_peter_index = index_list[t*test_capacity:(t+1)*test_capacity]
@@ -205,7 +232,7 @@ def man_made_test_agents():
                     isolated[test_person] = 1
 
             i = i + 1
-        print('Time = ', t,'Tests made: ', tests_made)
+        
 
 
 def update_states():
@@ -226,12 +253,12 @@ def set_temps():
     for i in np.where(S == 1)[0]:
         temperatures[i] = np.random.normal(37.4, 1.2)
 
-    for i in np.where(temperatures == 0)[0]:
+    for i in np.where(S == 0)[0]:
         temperatures[i] = np.random.normal(36.8, 1.0)
 
 
 if __name__ == '__main__':
-   
+    
     # Parameters of the simulation
     n = 800  # Number of agents
     initial_infected = 10  # Initial infected agents
@@ -283,9 +310,11 @@ if __name__ == '__main__':
     
 
     while t < 1000 and list(np.where(S == 1)[0]):
+        t1 = time.time()
+
         nx, ny = update_position()
         update_states()
-        man_made_test_agents()
+        initial_testing()
 
         
         # lockdown_enabled loop
@@ -304,7 +333,7 @@ if __name__ == '__main__':
         dead_history[t] =  len(list(np.where(S == 3)[0]))
         isolation_history[t] = len(list(np.where(isolated == 1)[0]))
         t += 1
-
+        print("For timestep" ,t-1,", Time spent on this iteration was", time.time() - t1)
         if t % 10 == 0:
             plot_sir()
     
