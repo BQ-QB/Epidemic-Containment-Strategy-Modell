@@ -123,11 +123,7 @@ def gen_contacts():
     contact_i[t % 50] = sick_contact_list
     contact_tot[t % 50] = contact_list
 
-    total_contact_tot[t % 10] = np.sum(contact_tot, 0)
-    total_contact_i[t % 10] = np.sum(contact_i, 0)
-
-    contact_q[t % 10] = np.nan_to_num(np.divide(total_contact_i[t % 10], total_contact_tot[t % 10]))
-    
+    contact_q[t % 10] =  np.nan_to_num(np.divide(np.sum(contact_i, 0),np.sum(contact_tot, 0)))
     
 
 
@@ -188,7 +184,7 @@ def gen_information_to_peter():
 
   CR_tensor = np.zeros(test_capacity,5,10)
   
-  for i in range(30):
+  for i in range(30): # här ska total_contact_i bytas ut mot en slice av contact_i vektorn istället. 
     CR_tensor[i] = [R_4[start_time:t%10], R_8[start_time:t%10], R_16[start_time:t%10], total_contact_i[start_time:t%10], contact_q[start_time:t%10]]
   if t>20:
     information_tensor = np.append(information_tensor, CR_tensor)
