@@ -305,7 +305,7 @@ if __name__ == '__main__':
  
     index_list = np.zeros((150*test_capacity))
  
-    # Plot list
+    # Plot lists
  
     susceptible_history =  np.zeros(N)
     infected_history = np.zeros(N)
@@ -339,37 +339,7 @@ if __name__ == '__main__':
                                             (x[j] + 2 * R) * res / l,
                                             (y[j] + 2 * R) * res / l,
                                             outline=ccolor[0], fill=ccolor[0]))
- 
-    # Modifiable parameters by the user
- 
-   
- 
- 
-    # Historylists used for plotting SIR-graph
-    infected_history = np.array([initial_infected - 1])
-    susceptible_history = np.array([n - initial_infected + 1])
-    recovered_history = np.array([0])
-    dead_history = np.array([0])
-    isolation_history = np.array([0])
-   
- 
-    # Contact matrix
-    contact_tot = np.zeros((50, n), dtype='int16')
-    contact_i = np.zeros((50, n), dtype='int16')
-    contact_q = np.zeros((50, n), dtype='float16')
-    total_contact_i = np.zeros((10, n), dtype='int16')
-    total_contact_tot = np.zeros((10, n), dtype='int16')
-    R_4 = np.zeros((10, n))
-    R_8 = np.zeros((10, n))
-    R_16 = np.zeros((10, n))
- 
-    information_tensor = np.zeros((20*test_capacity, 5, 10))
-    test_results = np.zeros((20*test_capacity))
- 
-    # output_results = np.zeros(n)
- 
-    index_list = np.zeros((150*test_capacity))
-       
+      
    
  
     while t < 1000 and list(np.where(S == 1)[0]):
