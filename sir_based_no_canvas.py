@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import time
+
 """
 import keras
 from keras.models import Sequential
@@ -70,20 +72,19 @@ def __init__():
 
 # Plots graph
 def plot_sir():
-    index_list_for_plot = susceptible_history.shape[0]
-    index_list_for_plot = np.array([i for i in range(index_list_for_plot)])
+    index_list_for_plot = np.array([i for i in range(t)])
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
-    label_susceptible = 'Susceptible = ' + str(susceptible_history[-1])
-    label_recovered = 'Recovered = ' + str(recovered_history[-1])
-    label_infected = 'Infected = ' + str(infected_history[-1])
-    label_dead = 'Dead = ' + str(dead_history[-1])
-    label_isolation = 'Isolation = ' + str(isolation_history[-1])
-    ax.plot(index_list_for_plot, susceptible_history, color='blue', label=label_susceptible)
-    ax.plot(index_list_for_plot, recovered_history, color='green', label=label_recovered)
-    ax.plot(index_list_for_plot, infected_history, color='red', label=label_infected)
-    ax.plot(index_list_for_plot, dead_history, color='purple', label=label_dead)
-    ax.plot(index_list_for_plot, isolation_history, color='black', label=label_isolation)
+    label_susceptible = 'Susceptible = ' + str(susceptible_history[t-1])
+    label_recovered = 'Recovered = ' + str(recovered_history[t-1])
+    label_infected = 'Infected = ' + str(infected_history[t-1])
+    label_dead = 'Dead = ' + str(dead_history[t-1])
+    label_isolation = 'Isolation = ' + str(isolation_history[t-1])
+    ax.plot(index_list_for_plot, susceptible_history[:t], color='blue', label=label_susceptible)
+    ax.plot(index_list_for_plot, recovered_history[:t], color='green', label=label_recovered)
+    ax.plot(index_list_for_plot, infected_history[:t], color='red', label=label_infected)
+    ax.plot(index_list_for_plot, dead_history[:t], color='purple', label=label_dead)
+    ax.plot(index_list_for_plot, isolation_history[:t], color='black', label=label_isolation)
     ax.set_title('Infection plot')
     ax.legend()
     plt.show()
@@ -94,74 +95,88 @@ def update_position():
     steps_x = steps_x_or_y < D / 2
     steps_y = (steps_x_or_y > D / 2) & (steps_x_or_y < D)
     nx = (x + np.sign(np.random.randn(n)) * steps_x) % l
-    ny = (y + np.sign(np.random.randn(n)) * steps_y) % l
+    ny = (y + np.sign(np.random.randn(n)) * steps_y) % l  
     for i in np.where(((isolated != 0) | (S == 3)))[0]:
         nx[i] = x[i]
-        ny[i] = y[i]
+        ny[i] = y[i] 
     return nx, ny
 
-
 def gen_contacts():
-    coord_list = np.zeros(n)
+
     contact_list = np.zeros(n)
     sick_contact_list = np.zeros(n)
+    coord_list = np.array([2**x[i] * 3**y[i] for i in range(n)])
+    sick_free_agents = np.where((S == 1) & (isolated != 1))[0]
+    non_dead_free_agents = np.where((S != 3) & (isolated != 1))[0]
 
-    for agent in range(n):
-        coord_list[agent] = (2 ** x[agent]) * (3 ** y[agent])
-
-    for infected in np.argsort(np.where((S == 1) & (isolated != 1))[0]):
+    for infected in sick_free_agents :
         infected_agent = infected
-        for other_agent in np.where(((S == 1) | (S == 0)) & (isolated == 0))[0]:
+        for other_agent in non_dead_free_agents:
             if (coord_list[infected_agent] == coord_list[other_agent]) & (infected_agent != other_agent):
                 sick_contact_list[other_agent] += 1
-
-    for agent in range(n):
-        current_agent = agent
-        for another_agent in range(n):
-            if (coord_list[current_agent] == coord_list[another_agent]) & (another_agent != current_agent):
-                contact_list[current_agent] += 1
+            
+    for i in range(n):
+        for hits in np.where((x[i] == x) & (y[i] == y) & (isolated != 1))[0]:
+            contact_list[i] += 1
+    
 
     contact_i[t % 50] = sick_contact_list
     contact_tot[t % 50] = contact_list
 
-    total_contact_tot[t % 10] = np.sum(contact_tot, 0)
-    total_contact_i[t % 10] = np.sum(contact_i, 0)
-
-    contact_q[t % 10] = np.nan_to_num(np.divide(total_contact_i[t % 10], total_contact_tot[t % 10]))
+    contact_q[t % 10] =  np.nan_to_num(np.divide(np.sum(contact_i, 0),np.sum(contact_tot, 0)))
+    
 
 
-def gen_R():  # testat generatorfunktion för R-matriserna
-    # nu implementerad som cirklar!
+def gen_R():  # Generatorfunktion för R-matriserna. Återfår samma resultat som tidigare implementationen, fast mycket snabbare
 
-    R_16[t % 10] = np.zeros(n)
-    R_8[t % 10] = np.zeros(n)
-    R_4[t % 10] = np.zeros(n)
-    for agents in range(n):
-        x_agent = x[agents]
-        y_agent = y[agents]
-        for sick_agents in np.where(S == 1)[0]:
-            x_sick = x[sick_agents]
-            y_sick = y[sick_agents]
-            if (x_agent - x_sick) ** 2 + (y_agent - y_sick) ** 2 <= 16 ** 2:
-                R_16[t % 10][agents] += 1
-                if (x_agent - x_sick) ** 2 + (y_agent - y_sick) ** 2 <= 8 ** 2:
-                    R_8[t % 10][agents] += 1
-                    if (x_agent - x_sick) ** 2 + (y_agent - y_sick) ** 2 <= 4 ** 2:
-                        R_4[t % 10][agents] += 1
+    # Behöver nollställa matriselementen inför tidssteget
+    temp_r16 = np.zeros(n)
+    temp_r8 = np.zeros(n)
+    temp_r4 = np.zeros(n)
+    r16_squared = 256
+    r8_squared = 64
+    r4_squared = 16
+
+    
+    sick_list = np.where((S==1)&(isolated !=1))[0]
+    xy_array = np.array([[x[i],y[i]] for i in range(n)])
+
+    for sickos in sick_list:
+        sick_coords = np.array([x[sickos], y[sickos]])
+
+        list_of_16_hits = np.where(np.sum((xy_array-sick_coords)**2 , axis = 1)<=r16_squared)
+        list_of_8_hits = np.where(np.sum((xy_array-sick_coords)**2 , axis = 1)<=r8_squared)
+        list_of_4_hits = np.where(np.sum((xy_array-sick_coords)**2 , axis = 1)<=r4_squared)
+
+        temp_r16[list_of_16_hits] +=1
+        temp_r8[list_of_8_hits] +=1
+        temp_r4[list_of_4_hits] +=1
+    
+    # It should not count itself as a person in its vacinity, so remove 1 from the sick indexes
+    temp_r16[sick_list] -= 1
+    temp_r8[sick_list]  -= 1
+    temp_r4[sick_list]  -= 1
+
+    R_16[t%10] = temp_r16
+    R_8[t%10] = temp_r8
+    R_4[t%10] = temp_r4
+
+       
 
 def initial_testing():
   test_priority = np.argsort(temperatures)
   test_priority = test_priority[-100:-1]
-  rand_selected = np.random.randint(0,100,test_capacity)
+  rand_selected = np.random.randint(0,99,test_capacity)
   to_be_tested = test_priority[rand_selected]
   testing_outcome = np.zeros(test_capacity)
-  for agents in to_be_tested: 
-    if S[agents] == 1:
-      testing_outcome[agents] = 1
+  for agents in range(test_capacity): 
+    if S[to_be_tested[agents]] == 1:
+      #testing_outcome[agents] = 1
+      isolated[to_be_tested[agents]] = 1
 
-    test_results[t*test_capacity : (t+1)*test_capacity] = testing_outcome
+  #test_results[t*test_capacity : (t+1)*test_capacity] = testing_outcome
   
-  index_list[t*test_capacity:(t+1)*test_capacity] = to_be_tested
+  #index_list[t*test_capacity:(t+1)*test_capacity] = to_be_tested
 
 def gen_information_to_peter():
   agent_to_peter_index = index_list[t*test_capacity:(t+1)*test_capacity]
@@ -169,7 +184,7 @@ def gen_information_to_peter():
 
   CR_tensor = np.zeros(test_capacity,5,10)
   
-  for i in range(30):
+  for i in range(30): # här ska total_contact_i bytas ut mot en slice av contact_i vektorn istället. 
     CR_tensor[i] = [R_4[start_time:t%10], R_8[start_time:t%10], R_16[start_time:t%10], total_contact_i[start_time:t%10], contact_q[start_time:t%10]]
   if t>20:
     information_tensor = np.append(information_tensor, CR_tensor)
@@ -203,7 +218,7 @@ def man_made_test_agents():
                     isolated[test_person] = 1
 
             i = i + 1
-        print('Time = ', t,'Tests made: ', tests_made)
+        
 
 
 def update_states():
@@ -224,15 +239,15 @@ def set_temps():
     for i in np.where(S == 1)[0]:
         temperatures[i] = np.random.normal(37.4, 1.2)
 
-    for i in np.where(temperatures == 0)[0]:
+    for i in np.where(S == 0)[0]:
         temperatures[i] = np.random.normal(36.8, 1.0)
 
 
 if __name__ == '__main__':
-   
+    
     # Parameters of the simulation
     n = 800  # Number of agents
-    initial_infected = 10  # Initial infected agents
+    initial_infected = 30  # Initial infected agents
     N = 100000  # Simulation time
     l = 30  # Lattice size
 
@@ -253,14 +268,6 @@ if __name__ == '__main__':
 
     set_temps()
     t = 0
-
-
-    # Historylists used for plotting SIR-graph
-    infected_history = np.array([initial_infected - 1])
-    susceptible_history = np.array([n - initial_infected + 1])
-    recovered_history = np.array([0])
-    dead_history = np.array([0])
-    isolation_history = np.array([0])
    
 
     # Contact matrix
@@ -279,13 +286,21 @@ if __name__ == '__main__':
     # output_results = np.zeros(n)
 
     index_list = np.zeros((150*test_capacity))
-       
+    # Plot list
+
+    susceptible_history =  np.zeros(300)
+    infected_history = np.zeros(300)
+    recovered_history = np.zeros(300)
+    dead_history =  np.zeros(300)
+    isolation_history = np.zeros(300)
     
 
     while t < 1000 and list(np.where(S == 1)[0]):
+        t1 = time.time()
+
         nx, ny = update_position()
         update_states()
-        man_made_test_agents()
+        initial_testing()
 
         
         # lockdown_enabled loop
@@ -298,16 +313,12 @@ if __name__ == '__main__':
         y = ny  # Update y
 
         # Used for plotting the graph
-        susceptible_history = np.append(susceptible_history, len(list(np.where(S == 0)[0])))
-        infected_history = np.append(infected_history, len(list(np.where(S == 1)[0])))
-        recovered_history = np.append(recovered_history, len(list(np.where(S == 2)[0])))
-        dead_history = np.append(dead_history, len(list(np.where(S == 3)[0])))
-        isolation_history = np.append(isolation_history, len(list(np.where(isolated == 1)[0])))
-
+        susceptible_history[t] = (len(list(np.where(S == 0)[0])))
+        infected_history[t] = len(list(np.where(S == 1)[0]))
+        recovered_history[t] = len(list(np.where(S == 2)[0]))
+        dead_history[t] =  len(list(np.where(S == 3)[0]))
+        isolation_history[t] = len(list(np.where(isolated == 1)[0]))
         t += 1
-
-        if t % 10 == 0:
+        print("For timestep" ,t-1,", Time spent on this iteration was", time.time() - t1)
+        if t % 50 == 0:
             plot_sir()
-    
-
-   
