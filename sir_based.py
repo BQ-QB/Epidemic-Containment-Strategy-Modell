@@ -63,7 +63,7 @@ def __init__():
     isolated = np.zeros(n)  # Isolation array, 0: not isolated, 1: Is currently in isolation
     temperatures = np.zeros(n, dtype='float16')  # temperature array
     tested = np.zeros(n)
-    S[0:initial_infected] = 1  # Infect agents that are close to center
+    S[0:initial_infected] = 1  # Infect random agents
     nx = x  # updated x
     ny = y  # updated y
     return x, y, S, isolated, temperatures, tested, nx, ny
@@ -103,48 +103,64 @@ def update_position():
 
 
 def gen_contacts():
-    coord_list = np.zeros(n)
     contact_list = np.zeros(n)
     sick_contact_list = np.zeros(n)
 
-    for agent in range(n):
-        coord_list[agent] = (2 ** x[agent]) * (3 ** y[agent])
+    coord_list = np.array([2**x[i] * 3**y[i] for i in range(n)])
 
-    for infected in np.argsort(np.where((S == 1) & (isolated != 1))[0]):
+    sick_free_agents = np.where((S == 1) & (isolated != 1))[0]
+    non_dead_free_agents = np.where((S != 3) & (isolated != 1))[0]
+
+    for infected in sick_free_agents :
         infected_agent = infected
-        for other_agent in np.where(((S == 1) | (S == 0)) & (isolated == 0))[0]:
+        for other_agent in non_dead_free_agents:
             if (coord_list[infected_agent] == coord_list[other_agent]) & (infected_agent != other_agent):
                 sick_contact_list[other_agent] += 1
-
-    for agent in range(n):
-        current_agent = agent
-        for another_agent in range(n):
-            if (coord_list[current_agent] == coord_list[another_agent]) & (another_agent != current_agent):
-                contact_list[current_agent] += 1
+            
+    for i in range(n):
+        for hits in np.where((x[i] == x) & (y[i] == y) & (isolated != 1))[0]:
+            contact_list[i] += 1
+    
 
     contact_i[t % 50] = sick_contact_list
     contact_tot[t % 50] = contact_list
 
-    contact_q[t % 10] = np.nan_to_num(np.divide(np.sum(contact_i, 0),np.sum(contact_tot, 0)))
+    contact_q[t % 10] =  np.nan_to_num(np.divide(np.sum(contact_i, 0),np.sum(contact_tot, 0)))
+    
 
 
 def gen_R():  # Generatorfunktion för R-matriserna
 
-    R_16[t % 10] = np.zeros(n)
-    R_8[t % 10] = np.zeros(n)
-    R_4[t % 10] = np.zeros(n)
-    for agents in range(n):
-        x_agent = x[agents]
-        y_agent = y[agents]
-        for sick_agents in np.where(S == 1)[0]:
-            x_sick = x[sick_agents]
-            y_sick = y[sick_agents]
-            if (x_agent - x_sick) ** 2 + (y_agent - y_sick) ** 2 <= 16 ** 2:
-                R_16[t % 10][agents] += 1
-                if (x_agent - x_sick) ** 2 + (y_agent - y_sick) ** 2 <= 8 ** 2:
-                    R_8[t % 10][agents] += 1
-                    if (x_agent - x_sick) ** 2 + (y_agent - y_sick) ** 2 <= 4 ** 2:
-                        R_4[t % 10][agents] += 1
+    temp_r16 = np.zeros(n)
+    temp_r8 = np.zeros(n)
+    temp_r4 = np.zeros(n)
+    r16_squared = 256
+    r8_squared = 64
+    r4_squared = 16
+
+    
+    sick_list = np.where((S==1)&(isolated !=1))[0]
+    xy_array = np.array([[x[i],y[i]] for i in range(n)])
+
+    for sickos in sick_list:
+        sick_coords = np.array([x[sickos], y[sickos]])
+
+        list_of_16_hits = np.where(np.sum((xy_array-sick_coords)**2 , axis = 1)<=r16_squared)
+        list_of_8_hits = np.where(np.sum((xy_array-sick_coords)**2 , axis = 1)<=r8_squared)
+        list_of_4_hits = np.where(np.sum((xy_array-sick_coords)**2 , axis = 1)<=r4_squared)
+
+        temp_r16[list_of_16_hits] +=1
+        temp_r8[list_of_8_hits] +=1
+        temp_r4[list_of_4_hits] +=1
+    
+    # It should not count itself as a person in its vacinity, so remove 1 from the sick indexes
+    temp_r16[sick_list] -= 1
+    temp_r8[sick_list]  -= 1
+    temp_r4[sick_list]  -= 1
+
+    R_16[t%10] = temp_r16
+    R_8[t%10] = temp_r8
+    R_4[t%10] = temp_r4
 
 def initial_testing():
   test_priority = np.argsort(temperatures)
