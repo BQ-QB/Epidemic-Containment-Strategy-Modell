@@ -103,14 +103,15 @@ def update_position():
 
 def gen_contacts():
 
-    t3 = time.time()
     contact_list = np.zeros(n)
     sick_contact_list = np.zeros(n)
     coord_list = np.array([2**x[i] * 3**y[i] for i in range(n)])
-    
-    for infected in np.where((S == 1) & (isolated != 1))[0]:
+    sick_free_agents = np.where((S == 1) & (isolated != 1))[0]
+    non_dead_free_agents = np.where((S != 3) & (isolated != 1))[0]
+
+    for infected in sick_free_agents :
         infected_agent = infected
-        for other_agent in np.where((S == 1 ) & (isolated == 0))[0]:
+        for other_agent in non_dead_free_agents:
             if (coord_list[infected_agent] == coord_list[other_agent]) & (infected_agent != other_agent):
                 sick_contact_list[other_agent] += 1
             
@@ -118,13 +119,6 @@ def gen_contacts():
         for hits in np.where((x[i] == x) & (y[i] == y) & (isolated != 1))[0]:
             contact_list[i] += 1
     
-    """
-    for agent in range(n):
-        current_agent = agent
-        for another_agent in range(n):
-            if (coord_list[current_agent] == coord_list[another_agent]) & (another_agent != current_agent):
-                contact_list[current_agent] += 1
-    """
 
     contact_i[t % 50] = sick_contact_list
     contact_tot[t % 50] = contact_list
@@ -133,12 +127,12 @@ def gen_contacts():
     total_contact_i[t % 10] = np.sum(contact_i, 0)
 
     contact_q[t % 10] = np.nan_to_num(np.divide(total_contact_i[t % 10], total_contact_tot[t % 10]))
-    print("Time taken at gen_contacts at timestep ", t, "was equal to ", time.time()-t3)
+    
     
 
 
 def gen_R():  # Generatorfunktion för R-matriserna. Återfår samma resultat som tidigare implementationen, fast mycket snabbare
-    t2 = time.time()
+
     # Behöver nollställa matriselementen inför tidssteget
     temp_r16 = np.zeros(n)
     temp_r8 = np.zeros(n)
@@ -171,12 +165,9 @@ def gen_R():  # Generatorfunktion för R-matriserna. Återfår samma resultat so
     R_8[t%10] = temp_r8
     R_4[t%10] = temp_r4
 
-    print("Gen R was completed for timestep ", t, " in a time of ", time.time()-t2)
-
        
 
 def initial_testing():
-  t1 = time.time()  
   test_priority = np.argsort(temperatures)
   test_priority = test_priority[-100:-1]
   rand_selected = np.random.randint(0,99,test_capacity)
@@ -190,7 +181,6 @@ def initial_testing():
   #test_results[t*test_capacity : (t+1)*test_capacity] = testing_outcome
   
   #index_list[t*test_capacity:(t+1)*test_capacity] = to_be_tested
-  print("Time taken by initial testing at t = ", t, "was ", time.time()-t1)
 
 def gen_information_to_peter():
   agent_to_peter_index = index_list[t*test_capacity:(t+1)*test_capacity]
@@ -260,10 +250,10 @@ def set_temps():
 if __name__ == '__main__':
     
     # Parameters of the simulation
-    n = 10000  # Number of agents
-    initial_infected = 100  # Initial infected agents
+    n = 800  # Number of agents
+    initial_infected = 30  # Initial infected agents
     N = 100000  # Simulation time
-    l = 100  # Lattice size
+    l = 30  # Lattice size
 
     # Modifiable parameters by the user
 
