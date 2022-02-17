@@ -13,47 +13,69 @@ np.seterr(invalid='ignore')
  
  
 def setupNN():
+    
     model = Sequential()  # Define the NN model
-    model.add(keras.Input(shape = (30,5,10)))
-    model.add(Dense(16, activation='relu'))  # Add Layers (Shape kanske inte behövs här?) 
+    
+    model.add(Flatten())
+    model.add(Dense(50,  activation='relu'))  # Add Layers (Shape kanske inte behövs här?) 
     model.add(Dense(16, activation='relu'))
     model.add(Dropout(0.2))
     model.add(Dense(16, activation='relu'))
     model.add(Dropout(0.2))
     model.add(Dense(16, activation='relu'))
     model.add(Dropout(0.2))
-    model.add(Dense(1, activation='softmax'))  # softmax ensures number between 0-1.
-    model.compile(loss='mean_squared_error', optimizer='adam', metrics='accuracy')
+    
+    model.add(Dense(1, activation='sigmoid'))  # softmax ensures number between 0-1.
+    model.compile(loss = 'mean_squared_error', optimizer='adam', metrics='accuracy')
     return model
  
  
 def trainNN():
-
+    reshaped_CR_tensor = np.reshape(CR_tensor, (600,50))
+    reshaped_test_results = np.reshape(test_results, 600)
     # Setup the training lists and feed them to the NN
     # Input för NN
     # arry/listan för y_train består av lång lista som korresponderar till x_train där varje index är 0 för frisk eller 1 för sjuk.
-    model.fit(CR_tensor, test_results, epochs=100) #vilken batch size?  #Input för NN, lista, där varje plats är matrix som i artikeln
+    model.fit(reshaped_CR_tensor, reshaped_test_results, epochs=100) #vilken batch size?  #Input för NN, lista, där varje plats är matrix som i artikeln
     # model.evaluate(x_test, y_test, verbose=1
     # model.layers[3].output  # Output för NN, Behöver eventuellt ändra idex beroende på om dropout räknas som lager, vill få output från softmax
-    # model.summary() Få tag i info om modellens uppbyggnad
+    # model.summary() Få tag i info om modellens 
     
-    resultNN = model.predict(n_tensor)
     
-    return resultNN
+    
+def make_predictionsNN():
+    
+    slicing_list = [(t-j)%10 for j in range(10) ]
+    for i in range(n):
+        n_tensor[i] = np.array([R_4[slicing_list, i], R_8[slicing_list, i], R_16[slicing_list, i], 
+        total_contact_i[slicing_list, i], contact_q[[slicing_list, i]]])
 
+    resultNN = model.predict(n_tensor)
+    print(resultNN)
+    return resultNN
+    # agent_to_peter_index = index_list[t*test_capacity:(t+1)*test_capacity]
  
+    #Tensor for prediction regarding all agents
+    
+    
+ 
+    
+
 def deployNN():
-    result = trainNN()
+    resultNN = make_predictionsNN()
  
-    for n in result:
-        p = result[n]
-        if p > 0.995:
-            pass
-            # isolate agent
-            if 0.5 < p < 0.995:
-                pass
-                # add to test array and test 100 agents with the highest temperature
- 
+    for most_plausibly_sick_agents in np.where(resultNN>0.995)[0]:
+        peter_isolate(most_plausibly_sick_agents)
+
+    for maybe_sick_agents in np.where(0.5<resultNN<=0.995)[0]:
+        rising_probability_indexes = np.argsort(maybe_sick_agents)
+        if len(list(rising_probability_indexes))>30:
+            returned_results = peter_test(rising_probability_indexes[-30:-1])
+        else:
+            returned_results = peter_test(rising_probability_indexes)
+    # Gör något med returnerade resultaten också
+
+
 def __init__():
     x = np.floor(np.random.rand(n) * l)  # x coordinates
     y = np.floor(np.random.rand(n) * l)  # y coordinates
@@ -175,21 +197,16 @@ def initial_testing():
             isolated[to_be_tested[agents]] = 1
 
     test_results[t] = testing_outcome
- 
     index_list[t*test_capacity:(t+1)*test_capacity] = to_be_tested
 
     gen_information_to_peter(to_be_tested)
 
-def peter_make_preds():
-    start_time = max(0, (t-9)%10)
-    for i in range(n):
-        n_tensor[i] = [R_4[start_time:t%10], R_8[start_time:t%10], R_16[start_time:t%10], np.sum(contact_i[start_time:t%10], 0), contact_q[start_time:t%10]]
 
 def gen_information_to_peter(to_be_tested):
     # agent_to_peter_index = index_list[t*test_capacity:(t+1)*test_capacity]
  
     #Tensor for prediction regarding all agents
-    slicing_list = [(t-10+j)%10 for j in range(10) ]
+    slicing_list = [(t-j)%10 for j in range(10) ]
     
  
     for i in range(test_capacity):
@@ -198,15 +215,19 @@ def gen_information_to_peter(to_be_tested):
         total_contact_i[slicing_list, k], contact_q[slicing_list, k]])
     
     information_tensor[t*test_capacity:(t+1)*test_capacity] = CR_tensor[t]
-    if t > 6:
-        print(CR_tensor[t%10][5], t)
-    print('då')
  
 def peter_test(peter_test_list):
-    pass
+    results_from_peters_test = np.zeros(test_capacity)
+    i = 0
+    for agent in peter_test_list:
+        if S(agent) == 1:
+            results_from_peters_test[i] = 1
+        i +=1
+    return results_from_peters_test
  
 def peter_isolate(peter_isolate_list):
-    pass
+    for agent in peter_isolate_list:
+        isolated[agent] = 1
  
 def man_made_test_agents():
     # Tests sick agents, if positive test then set in isolation and isolate neighbours in contactmatrix
@@ -321,10 +342,10 @@ if __name__ == '__main__':
         update_states()
         if t<20:
             initial_testing()
-            print('hej')
-        if t > 19:
-            deployNN()    
-     
+        if t == 20:
+            trainNN()    
+        if t>20:
+            deployNN()
         
  
         # lockdown_enabled loop
