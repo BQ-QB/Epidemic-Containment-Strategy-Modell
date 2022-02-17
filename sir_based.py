@@ -13,63 +13,67 @@ np.seterr(invalid='ignore')
  
  
 def setupNN():
+    
     model = Sequential()  # Define the NN model
-    model.add(Dense(16, input_dim=5, activation='relu'))  # Add Layers
+    
+    model.add(Flatten())
+    model.add(Dense(50,  activation='relu'))  # Add Layers (Shape kanske inte behövs här?) 
     model.add(Dense(16, activation='relu'))
     model.add(Dropout(0.2))
     model.add(Dense(16, activation='relu'))
     model.add(Dropout(0.2))
     model.add(Dense(16, activation='relu'))
     model.add(Dropout(0.2))
-    model.add(Dense(1, activation='softmax'))  # softmax ensures number between 0-1.
-    model.compile(loss='mean_squared_error', optimizer='adam', metrics='accuracy')
+    
+    model.add(Dense(1, activation='sigmoid'))  # softmax ensures number between 0-1.
+    model.compile(loss = 'mean_squared_error', optimizer='adam', metrics='accuracy')
     return model
  
  
 def trainNN():
-    if t > 19:
-        pass
-       
-        # Setup the training lists and feed them to the NN
-        # Input för NN
-        # arry/listan för y_train består av lång lista som korresponderar till x_train där varje index är 0 för frisk eller 1 för sjuk.
-        model.fit(CR_tensor, y_train, epochs=100) #vilken batch size?  #Input för NN, lista, där varje plats är matrix som i artikeln
-        # model.evaluate(x_test, y_test, verbose=1
-        # model.layers[3].output  # Output för NN, Behöver eventuellt ändra idex beroende på om dropout räknas som lager, vill få output från softmax
-        # model.summary() Få tag i info om modellens uppbyggnad
-       
-        resultNN = model.predict(n_tensor)
-       
-        return resultNN
+    reshaped_CR_tensor = np.reshape(CR_tensor, (600,50))
+    reshaped_test_results = np.reshape(test_results, 600)
+    # Setup the training lists and feed them to the NN
+    # Input för NN
+    # arry/listan för y_train består av lång lista som korresponderar till x_train där varje index är 0 för frisk eller 1 för sjuk.
+    model.fit(reshaped_CR_tensor, reshaped_test_results, epochs=100) #vilken batch size?  #Input för NN, lista, där varje plats är matrix som i artikeln
+    # model.evaluate(x_test, y_test, verbose=1
+    # model.layers[3].output  # Output för NN, Behöver eventuellt ändra idex beroende på om dropout räknas som lager, vill få output från softmax
+    # model.summary() Få tag i info om modellens 
+    
+    
+    
+def make_predictionsNN():
+    
+    slicing_list = [(t-j)%10 for j in range(10) ]
+    for i in range(n):
+        n_tensor[i] = np.array([R_4[slicing_list, i], R_8[slicing_list, i], R_16[slicing_list, i], 
+        total_contact_i[slicing_list, i], contact_q[[slicing_list, i]]])
+
+    resultNN = model.predict(n_tensor)
+    return resultNN
+    # agent_to_peter_index = index_list[t*test_capacity:(t+1)*test_capacity]
  
+    #Tensor for prediction regarding all agents
+    
+    
  
+    
+
 def deployNN():
-    if t > 19:
-        result = trainNN(model)
- 
-    for n in result:
-        p = result[n]
-        if p > 0.995:
-            pass
-            # isolate agent
-            if 0.5 < p < 0.995:
-                pass
-                # add to test array and test 100 agents with the highest temperature
- 
- 
-def deployNN(model, t):
-    if t > 20:
-        result = trainNN(model)
- 
-    for n in result:
-        p = result[n]
-        if p > 0.995:
-            pass
-            # isolate agent
-            if 0.5 < p < 0.995:
-                pass
-                # add to test array and test 100 agents with the highest temperature
- 
+    resultNN = make_predictionsNN()
+    most_plausibly_sick_agents  = np.where(resultNN>0.995)[0]
+    peter_isolate(most_plausibly_sick_agents)
+
+    maybe_sick_agents = np.where((0.5<resultNN) & (resultNN<=0.995))[0]
+    rising_probability_indexes = np.argsort(maybe_sick_agents)
+    if len(list(rising_probability_indexes))>30:
+        returned_results = peter_test(rising_probability_indexes[-30:-1])
+    else:
+        returned_results = peter_test(rising_probability_indexes)
+    # Gör något med returnerade resultaten också
+
+
 def __init__():
     x = np.floor(np.random.rand(n) * l)  # x coordinates
     y = np.floor(np.random.rand(n) * l)  # y coordinates
@@ -86,20 +90,19 @@ def __init__():
  
 # Plots graph
 def plot_sir():
-    index_list_for_plot = susceptible_history.shape[0]
-    index_list_for_plot = np.array([i for i in range(index_list_for_plot)])
+    index_list_for_plot = np.array([i for i in range(t)])
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
-    label_susceptible = 'Susceptible = ' + str(susceptible_history[-1])
-    label_recovered = 'Recovered = ' + str(recovered_history[-1])
-    label_infected = 'Infected = ' + str(infected_history[-1])
-    label_dead = 'Dead = ' + str(dead_history[-1])
-    label_isolation = 'Isolation = ' + str(isolation_history[-1])
-    ax.plot(index_list_for_plot, susceptible_history, color='blue', label=label_susceptible)
-    ax.plot(index_list_for_plot, recovered_history, color='green', label=label_recovered)
-    ax.plot(index_list_for_plot, infected_history, color='red', label=label_infected)
-    ax.plot(index_list_for_plot, dead_history, color='purple', label=label_dead)
-    ax.plot(index_list_for_plot, isolation_history, color='black', label=label_isolation)
+    label_susceptible = 'Susceptible = ' + str(susceptible_history[t-1])
+    label_recovered = 'Recovered = ' + str(recovered_history[t-1])
+    label_infected = 'Infected = ' + str(infected_history[t-1])
+    label_dead = 'Dead = ' + str(dead_history[t-1])
+    label_isolation = 'Isolation = ' + str(isolation_history[t-1])
+    ax.plot(index_list_for_plot, susceptible_history[:t], color='blue', label=label_susceptible)
+    ax.plot(index_list_for_plot, recovered_history[:t], color='green', label=label_recovered)
+    ax.plot(index_list_for_plot, infected_history[:t], color='red', label=label_infected)
+    ax.plot(index_list_for_plot, dead_history[:t], color='purple', label=label_dead)
+    ax.plot(index_list_for_plot, isolation_history[:t], color='black', label=label_isolation)
     ax.set_title('Infection plot')
     ax.legend()
     plt.show()
@@ -139,11 +142,13 @@ def gen_contacts():
  
     contact_i[t % 50] = sick_contact_list
     contact_tot[t % 50] = contact_list
+
+    total_contact_i[t%10] = np.sum(contact_i, 0)
+    total_contact_tot[t%10] = np.sum(contact_tot, 0)
  
     contact_q[t % 10] =  np.nan_to_num(np.divide(np.sum(contact_i, 0),np.sum(contact_tot, 0)))
-   
- 
- 
+
+
 def gen_R():  # Generatorfunktion för R-matriserna
  
     temp_r16 = np.zeros(n)
@@ -177,44 +182,56 @@ def gen_R():  # Generatorfunktion för R-matriserna
     R_8[t%10] = temp_r8
     R_4[t%10] = temp_r4
  
+
 def initial_testing():
-  test_priority = np.argsort(temperatures)
-  test_priority = test_priority[-100:-1]
-  rand_selected = np.random.randint(0,100,test_capacity)
-  to_be_tested = test_priority[rand_selected]
-  testing_outcome = np.zeros(test_capacity)
-  for agents in to_be_tested:
-    if S[agents] == 1:
-      testing_outcome[agents] = 1
+    test_priority = np.argsort(temperatures)
+    test_priority = test_priority[-100:-1]
+    rand_selected = np.random.randint(0,99,test_capacity)
+    to_be_tested = test_priority[rand_selected]
+    testing_outcome = np.zeros(test_capacity)
+    for agents in range(30):
+        if S[to_be_tested[agents]] == 1:
+            testing_outcome[agents] = 1
+            isolated[to_be_tested[agents]] = 1
+
+    test_results[t] = testing_outcome
+    index_list[t*test_capacity:(t+1)*test_capacity] = to_be_tested
+
+    gen_information_to_peter(to_be_tested)
+
+
+def gen_information_to_peter(to_be_tested):
+    # agent_to_peter_index = index_list[t*test_capacity:(t+1)*test_capacity]
  
-    test_results[t*test_capacity : (t+1)*test_capacity] = testing_outcome
+    #Tensor for prediction regarding all agents
+    slicing_list = [(t-j)%10 for j in range(10) ]
+    
  
-  index_list[t*test_capacity:(t+1)*test_capacity] = to_be_tested
- 
-def gen_information_to_peter():
-  agent_to_peter_index = index_list[t*test_capacity:(t+1)*test_capacity]
-  start_time = max(0, (t-9)%10)
- 
-  CR_tensor = np.zeros(test_capacity,5,10)
-  n_tensor = np.zeros(n,5,10)
- 
-  yTrainPeter_array = np.zeros(test_capacity)
- 
-  #Tensor for prediction regarding all agents
-  for i in range(n):
-    n_tensor = [R_4[start_time:t%10], R_8[start_time:t%10], R_16[start_time:t%10], total_contact_i[start_time:t%10], contact_q[start_time:t%10]]
- 
-  for i in range(30):
-    CR_tensor[i] = [R_4[start_time:t%10], R_8[start_time:t%10], R_16[start_time:t%10], total_contact_i[start_time:t%10], contact_q[start_time:t%10]]
-  if t>20:
-    information_tensor = np.append(information_tensor, CR_tensor)
-  else: information_tensor[t*test_capacity:(t+1)*test_capacity] = CR_tensor
+    for i in range(test_capacity):
+        k = to_be_tested[i]
+        CR_tensor[t][i] = np.array([R_4[slicing_list, k] , R_8[slicing_list, k], R_16[slicing_list, k], 
+        total_contact_i[slicing_list, k], contact_q[slicing_list, k]])
+    
+    information_tensor[t*test_capacity:(t+1)*test_capacity] = CR_tensor[t]
  
 def peter_test(peter_test_list):
-  pass
+    
+    results_from_peters_test = np.zeros(test_capacity)
+    i = 0
+    
+    for agent in peter_test_list:
+        if S[agent] == 1:
+            results_from_peters_test[i] = 1
+            isolated[agent] = 1
+        i +=1
+   
+    return results_from_peters_test
  
 def peter_isolate(peter_isolate_list):
-  pass
+
+    for agent in peter_isolate_list:
+        isolated[agent] = 1
+
  
 def man_made_test_agents():
     # Tests sick agents, if positive test then set in isolation and isolate neighbours in contactmatrix
@@ -249,7 +266,7 @@ def update_states():
         S[i] = 3
     recovered_list = np.where((S == 1) & (np.random.rand(n) < G))[0]
     S[recovered_list] = 2
-    # isolated[recovered_list] = 0
+    isolated[recovered_list] = 0
     gen_contacts()
     gen_R()
  
@@ -277,12 +294,13 @@ if __name__ == '__main__':
     B = 0.6
     G = 0.03
  
-    My = 0.00
+    My = 0.02
     start_lock = 50
     lockdown_enabled = False
     test_capacity = 30
    
     t = 0
+    peter_start_time = 20
  
  
     #initiate the lists
@@ -293,13 +311,20 @@ if __name__ == '__main__':
     # Contact matrix
     contact_tot = np.zeros((50, n), dtype='int16')
     contact_i = np.zeros((50, n), dtype='int16')
+    total_contact_tot = np.zeros((10, n), dtype='int16')
+    total_contact_i = np.zeros((10, n), dtype='int16')
+    
     contact_q = np.zeros((50, n), dtype='float16')
     R_4 = np.zeros((10, n))
     R_8 = np.zeros((10, n))
     R_16 = np.zeros((10, n))
- 
+    
+
+    CR_tensor = np.zeros((peter_start_time, test_capacity,5,10))
+    n_tensor = np.zeros((n,5,10))
+
     information_tensor = np.zeros((20*test_capacity, 5, 10))
-    test_results = np.zeros((20*test_capacity))
+    test_results = np.zeros((20,test_capacity))
  
     # output_results = np.zeros(n)
  
@@ -311,26 +336,24 @@ if __name__ == '__main__':
     infected_history = np.zeros(N)
     recovered_history = np.zeros(N)
     dead_history =  np.zeros(N)
-    isolation_history = np.zeros(N)
- 
- 
-    # Canvas info
- 
+    isolation_history = np.zeros(N)    
+
+
+     # Canvas info
+
     res = 500  # Animation resolution
     tk = Tk()
     tk.geometry(str(int(res * 1.1)) + 'x' + str(int(res * 1.3)))
     tk.configure(background='white')
- 
+
     canvas = Canvas(tk, bd=2)  # Generate animation window
     tk.attributes('-topmost', 0)
     canvas.place(x=res / 20, y=res / 20, height=res, width=res)
     ccolor = ['#0008FF', '#DB0000', '#12F200', '#68228B', '#000000']
- 
+
     show_plot = Button(tk, text='Plot', command=plot_sir)
     show_plot.place(relx=0.05, rely=0.85, relheight=0.06, relwidth=0.15)
- 
-   
- 
+
     particles = []
     R = .5  # agent plot radius
     for j in range(n):  # Generate animated particles in Canvas
@@ -339,26 +362,28 @@ if __name__ == '__main__':
                                             (x[j] + 2 * R) * res / l,
                                             (y[j] + 2 * R) * res / l,
                                             outline=ccolor[0], fill=ccolor[0]))
-      
+
    
+
+    model = setupNN()
  
     while t < 1000 and list(np.where(S == 1)[0]):
         nx, ny = update_position()
         update_states()
-        initial_testing()
-        if t > 19:
+        if t<20:
+            initial_testing()
+        if t == 20:
+            trainNN()    
+        if t>20:
             deployNN()
- 
-       
- 
- 
+        
+
         for j in range(n):
             canvas.move(particles[j], (nx[j] - x[j]) * res / l, (ny[j] - y[j]) * res / l)  # Plot update - Positions
             canvas.itemconfig(particles[j], outline='#303030',
                               fill=ccolor[int(S[j]) if isolated[j] == 0 else 4])  # Plot update - Colors
         tk.update()
         tk.title('Infected:' + str(np.sum(S == 1)) + ' Timesteps passed:' + str(t))
-        man_made_test_agents()
  
         # lockdown_enabled loop
         if start_lock < t < start_lock + 200 and lockdown_enabled:
@@ -378,9 +403,7 @@ if __name__ == '__main__':
  
         t += 1
  
-        if t % 10 == 0:
+        if t % 90 == 0:
             plot_sir()
  
-    Tk.mainloop(canvas)  # Release animation handle (close window to finish)
- 
-
+    Tk.mainloop(canvas) 

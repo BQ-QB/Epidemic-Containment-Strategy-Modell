@@ -1,5 +1,4 @@
 import numpy as np
-from tkinter import *
 import matplotlib.pyplot as plt
 import keras
 from keras.models import Sequential
@@ -51,7 +50,6 @@ def make_predictionsNN():
         total_contact_i[slicing_list, i], contact_q[[slicing_list, i]]])
 
     resultNN = model.predict(n_tensor)
-    print(resultNN)
     return resultNN
     # agent_to_peter_index = index_list[t*test_capacity:(t+1)*test_capacity]
  
@@ -63,16 +61,15 @@ def make_predictionsNN():
 
 def deployNN():
     resultNN = make_predictionsNN()
- 
-    for most_plausibly_sick_agents in np.where(resultNN>0.995)[0]:
-        peter_isolate(most_plausibly_sick_agents)
+    most_plausibly_sick_agents  = np.where(resultNN>0.995)[0]
+    peter_isolate(most_plausibly_sick_agents)
 
-    for maybe_sick_agents in np.where(0.5<resultNN<=0.995)[0]:
-        rising_probability_indexes = np.argsort(maybe_sick_agents)
-        if len(list(rising_probability_indexes))>30:
-            returned_results = peter_test(rising_probability_indexes[-30:-1])
-        else:
-            returned_results = peter_test(rising_probability_indexes)
+    maybe_sick_agents = np.where((0.5<resultNN) & (resultNN<=0.995))[0]
+    rising_probability_indexes = np.argsort(maybe_sick_agents)
+    if len(list(rising_probability_indexes))>30:
+        returned_results = peter_test(rising_probability_indexes[-30:-1])
+    else:
+        returned_results = peter_test(rising_probability_indexes)
     # Gör något med returnerade resultaten också
 
 
@@ -149,9 +146,8 @@ def gen_contacts():
     total_contact_tot[t%10] = np.sum(contact_tot, 0)
  
     contact_q[t % 10] =  np.nan_to_num(np.divide(np.sum(contact_i, 0),np.sum(contact_tot, 0)))
-   
- 
- 
+
+
 def gen_R():  # Generatorfunktion för R-matriserna
  
     temp_r16 = np.zeros(n)
@@ -185,6 +181,7 @@ def gen_R():  # Generatorfunktion för R-matriserna
     R_8[t%10] = temp_r8
     R_4[t%10] = temp_r4
  
+
 def initial_testing():
     test_priority = np.argsort(temperatures)
     test_priority = test_priority[-100:-1]
@@ -217,17 +214,23 @@ def gen_information_to_peter(to_be_tested):
     information_tensor[t*test_capacity:(t+1)*test_capacity] = CR_tensor[t]
  
 def peter_test(peter_test_list):
+    
     results_from_peters_test = np.zeros(test_capacity)
     i = 0
+    
     for agent in peter_test_list:
-        if S(agent) == 1:
+        if S[agent] == 1:
             results_from_peters_test[i] = 1
+            isolated[agent] = 1
         i +=1
+   
     return results_from_peters_test
  
 def peter_isolate(peter_isolate_list):
+
     for agent in peter_isolate_list:
         isolated[agent] = 1
+
  
 def man_made_test_agents():
     # Tests sick agents, if positive test then set in isolation and isolate neighbours in contactmatrix
@@ -262,7 +265,7 @@ def update_states():
         S[i] = 3
     recovered_list = np.where((S == 1) & (np.random.rand(n) < G))[0]
     S[recovered_list] = 2
-    # isolated[recovered_list] = 0
+    isolated[recovered_list] = 0
     gen_contacts()
     gen_R()
  
@@ -290,7 +293,7 @@ if __name__ == '__main__':
     B = 0.6
     G = 0.03
  
-    My = 0.00
+    My = 0.02
     start_lock = 50
     lockdown_enabled = False
     test_capacity = 30
@@ -347,7 +350,6 @@ if __name__ == '__main__':
         if t>20:
             deployNN()
         
- 
         # lockdown_enabled loop
         if start_lock < t < start_lock + 200 and lockdown_enabled:
             D = D_reduced
@@ -366,7 +368,5 @@ if __name__ == '__main__':
  
         t += 1
  
-        if t % 30 == 0:
+        if t % 90 == 0:
             plot_sir()
- 
-    
