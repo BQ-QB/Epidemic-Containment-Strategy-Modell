@@ -14,7 +14,8 @@ np.seterr(invalid='ignore')
  
 def setupNN():
     model = Sequential()  # Define the NN model
-    model.add(Dense(16, input_dim=5, activation='relu'))  # Add Layers
+    model.add(keras.Input(shape = (30,5,10)))
+    model.add(Dense(16, activation='relu'))  # Add Layers (Shape kanske inte behövs här?) 
     model.add(Dense(16, activation='relu'))
     model.add(Dropout(0.2))
     model.add(Dense(16, activation='relu'))
@@ -193,12 +194,12 @@ def gen_information_to_peter(to_be_tested):
  
     for i in range(test_capacity):
         k = to_be_tested[i]
-        CR_tensor[t][i] = np.array([[R_4[j][k] for j in slicing_list], [R_8[j][k] for j in slicing_list], [R_16[j][k] for j in slicing_list], 
-        [total_contact_i[j][k] for j in slicing_list], [contact_q[j][k] for j in slicing_list]])
+        CR_tensor[t][i] = np.array([R_4[slicing_list, k] , R_8[slicing_list, k], R_16[slicing_list, k], 
+        total_contact_i[slicing_list, k], contact_q[slicing_list, k]])
     
     information_tensor[t*test_capacity:(t+1)*test_capacity] = CR_tensor[t]
     if t > 6:
-        print(CR_tensor[t%10][5])
+        print(CR_tensor[t%10][5], t)
     print('då')
  
 def peter_test(peter_test_list):
@@ -322,8 +323,7 @@ if __name__ == '__main__':
             initial_testing()
             print('hej')
         if t > 19:
-            pass
-            #deployNN()    
+            deployNN()    
      
         
  
