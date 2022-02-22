@@ -9,6 +9,7 @@ from keras.layers import Conv2D, MaxPooling2D
 from keras import backend as K
 from keras.utils import np_utils #Needed to enable "to_categorical"
  
+ 
 np.seterr(invalid='ignore')
  
  
@@ -42,7 +43,6 @@ def trainNN():
     # model.summary() Få tag i info om modellens 
     
     
-    
 def make_predictionsNN():
     
     slicing_list = [(t-j)%10 for j in range(10) ]
@@ -55,9 +55,6 @@ def make_predictionsNN():
     # agent_to_peter_index = index_list[t*test_capacity:(t+1)*test_capacity]
  
     #Tensor for prediction regarding all agents
-    
-    
- 
     
 
 def deployNN():
@@ -84,8 +81,10 @@ def __init__():
     S[0:initial_infected] = 1  # Infect random agents
     nx = x  # updated x
     ny = y  # updated y
+    A = np.zeros(n)
+    is_mutation = False
     setupNN()
-    return x, y, S, isolated, temperatures, tested, nx, ny
+    return x, y, S, isolated, temperatures, tested, nx, ny, A, is_mutation
  
  
 # Plots graph
@@ -181,7 +180,7 @@ def gen_R():  # Generatorfunktion för R-matriserna
     R_16[t%10] = temp_r16
     R_8[t%10] = temp_r8
     R_4[t%10] = temp_r4
- 
+
 
 def initial_testing():
     test_priority = np.argsort(temperatures)
@@ -213,7 +212,8 @@ def gen_information_to_peter(to_be_tested):
         total_contact_i[slicing_list, k], contact_q[slicing_list, k]])
     
     information_tensor[t*test_capacity:(t+1)*test_capacity] = CR_tensor[t]
- 
+
+
 def peter_test(peter_test_list):
     
     results_from_peters_test = np.zeros(test_capacity)
@@ -232,7 +232,7 @@ def peter_isolate(peter_isolate_list):
     for agent in peter_isolate_list:
         isolated[agent] = 1
 
- 
+
 def man_made_test_agents():
     # Tests sick agents, if positive test then set in isolation and isolate neighbours in contactmatrix
     if t > 20:
@@ -256,8 +256,8 @@ def man_made_test_agents():
  
             i = i + 1
         print('Time = ', t,'Tests made: ', tests_made)
- 
- 
+
+
 def update_states():
     for i in np.where((isolated != 1) & (S == 1) & (np.random.random(n) < B))[0]:  # loop over infecting agents
         temperatures[(x == x[i]) & (y == y[i]) & (S == 0)] = np.random.normal(40,1)  # Raise newly sick agents temperatures
@@ -267,20 +267,58 @@ def update_states():
     recovered_list = np.where((S == 1) & (np.random.rand(n) < G))[0]
     S[recovered_list] = 2
     isolated[recovered_list] = 0
+    
+    # reinfects a recovered agent
+    if is_mutation:
+        for i in np.where((S==2) & (np.random.random(n) < B_recovered)):
+            S[i] = 1
+        
     gen_contacts()
     gen_R()
- 
- 
+
+
 def set_temps():
     for i in np.where(S == 1)[0]:
         temperatures[i] = np.random.normal(37.4, 1.2)
  
     for i in np.where(temperatures == 0)[0]:
         temperatures[i] = np.random.normal(36.8, 1.0)
+
  
+def set_age_groups():
+    '''
+    A==0 => young, A==1 => adult, A==2 => old
+    assuming that population rougly has a 20-60-20 distribution
+    '''
+    for i in range(n):
+        rand = np.random.random_sample()
+        if (rand<=0.2):
+            A[i] = 0
+        elif (0.2<rand<0.8):
+            A[i] = 1
+        else:
+            A[i] = 2
+
+
+def mutation():
+    global is_mutation # is_mutation needs to be in correct scope
+    is_mutation = True
+    B = 0.8
+    B_recovered = 0.2 # probability of recovered agent being reinfected
+    G = 0.03
+    My = 0.01
+    return B, B_recovered, G, My
+
+
+def disesase():
+    B = 0.6
+    G = 0.03
+    My = 0.02
+    return B, G, My
+
  
 if __name__ == '__main__':
-   
+    
     # Parameters of the simulation
     n = 800  # Number of agents
     initial_infected = 10  # Initial infected agents
@@ -291,22 +329,20 @@ if __name__ == '__main__':
     D_reduced = 0.1
  
     D = D_noll
-    B = 0.6
-    G = 0.03
- 
-    My = 0.02
+   
+    B, G, My = disesase()
+    
     start_lock = 50
     lockdown_enabled = False
     test_capacity = 30
-   
+    
     t = 0
     peter_start_time = 20
- 
- 
+    
     #initiate the lists
-    x, y, S, isolated, temperatures, tested, nx, ny = __init__()
+    x, y, S, isolated, temperatures, tested, nx, ny, A, is_mutation = __init__()
+    set_age_groups()
     set_temps()
- 
  
     # Contact matrix
     contact_tot = np.zeros((50, n), dtype='int16')
@@ -319,7 +355,6 @@ if __name__ == '__main__':
     R_8 = np.zeros((10, n))
     R_16 = np.zeros((10, n))
     
-
     CR_tensor = np.zeros((peter_start_time, test_capacity,5,10))
     n_tensor = np.zeros((n,5,10))
 
@@ -331,7 +366,6 @@ if __name__ == '__main__':
     index_list = np.zeros((150*test_capacity))
  
     # Plot lists
- 
     susceptible_history =  np.zeros(N)
     infected_history = np.zeros(N)
     recovered_history = np.zeros(N)
@@ -340,7 +374,6 @@ if __name__ == '__main__':
 
 
      # Canvas info
-
     res = 500  # Animation resolution
     tk = Tk()
     tk.geometry(str(int(res * 1.1)) + 'x' + str(int(res * 1.3)))
@@ -363,8 +396,6 @@ if __name__ == '__main__':
                                             (y[j] + 2 * R) * res / l,
                                             outline=ccolor[0], fill=ccolor[0]))
 
-   
-
     model = setupNN()
  
     while t < 1000 and list(np.where(S == 1)[0]):
@@ -376,8 +407,11 @@ if __name__ == '__main__':
             trainNN()    
         if t>20:
             deployNN()
-        
-
+        if t==40:
+            print("Disease has mutated!")
+            B, B_recovered, G, My = mutation()
+            print("New values are, B=", B, ", B_recovered=", B_recovered, ", G=", G, ", My=", My)
+            
         for j in range(n):
             canvas.move(particles[j], (nx[j] - x[j]) * res / l, (ny[j] - y[j]) * res / l)  # Plot update - Positions
             canvas.itemconfig(particles[j], outline='#303030',
