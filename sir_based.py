@@ -12,7 +12,7 @@ from keras.utils import np_utils #Needed to enable "to_categorical"
  
 np.seterr(invalid='ignore')
  
- 
+
 def setupNN():
     
     model = Sequential()  # Define the NN model
@@ -259,18 +259,24 @@ def man_made_test_agents():
 
 
 def update_states():
+
     for i in np.where((isolated != 1) & (S == 1) & (np.random.random(n) < B))[0]:  # loop over infecting agents
         temperatures[(x == x[i]) & (y == y[i]) & (S == 0)] = np.random.normal(40,1)  # Raise newly sick agents temperatures
         S[(x == x[i]) & (y == y[i]) & (S == 0)] = 1  # Susceptiples together with infecting agent becomes infected
-    for i in np.where((S == 1) & (np.random.random(n) < My))[0]:
+
+    for i in np.where((S==1) & (np.random.random(n) < My) & (A<2))[0]:
         S[i] = 3
+    
+    for i in np.where((S==1) & (A==2) & (np.random.random(n) < My_old))[0]:
+        S[i] = 3
+
     recovered_list = np.where((S == 1) & (np.random.rand(n) < G))[0]
     S[recovered_list] = 2
     isolated[recovered_list] = 0
     
     # reinfects a recovered agent
     if is_mutation:
-        for i in np.where((S==2) & (np.random.random(n) < B_recovered)):
+        for i in np.where((S==2) & (np.random.random(n) < B_recovered))[0]:
             S[i] = 1
         
     gen_contacts()
@@ -310,14 +316,19 @@ def mutation():
     return B, B_recovered, G, My
 
 
-def disesase():
+def disease():
     B = 0.6
     G = 0.03
     My = 0.02
-    return B, G, My
+    My_old = 0.3
+    return B, G, My, My_old
 
  
 if __name__ == '__main__':
+
+    old_infected = 0
+    old_kill_count = 0
+
     
     # Parameters of the simulation
     n = 800  # Number of agents
@@ -330,7 +341,7 @@ if __name__ == '__main__':
  
     D = D_noll
    
-    B, G, My = disesase()
+    B, G, My, My_old = disease()
     
     start_lock = 50
     lockdown_enabled = False
