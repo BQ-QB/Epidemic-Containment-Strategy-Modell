@@ -1,35 +1,37 @@
 import numpy as np
 from tkinter import *
 import matplotlib.pyplot as plt
-import keras
+import sys
+import copy
 from keras.models import Sequential
 from keras.datasets import mnist
 from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 from keras import backend as K
 from keras.utils import np_utils #Needed to enable "to_categorical"
- 
+
+
 np.seterr(invalid='ignore')
- 
- 
+
+
 def setupNN():
-    
+  
     model = Sequential()  # Define the NN model
-    
+   
     model.add(Flatten())
-    model.add(Dense(50,  activation='relu'))  # Add Layers (Shape kanske inte behövs här?) 
+    model.add(Dense(50,  activation='relu'))  # Add Layers (Shape kanske inte behövs här?)
     model.add(Dense(16, activation='relu'))
     model.add(Dropout(0.2))
     model.add(Dense(16, activation='relu'))
     model.add(Dropout(0.2))
     model.add(Dense(16, activation='relu'))
     model.add(Dropout(0.2))
-    
+   
     model.add(Dense(1, activation='sigmoid'))  # softmax ensures number between 0-1.
     model.compile(loss = 'mean_squared_error', optimizer='adam', metrics='accuracy')
     return model
- 
- 
+
+
 def trainNN():
     reshaped_CR_tensor = np.reshape(CR_tensor, (600,50))
     reshaped_test_results = np.reshape(test_results, 600)
@@ -39,32 +41,28 @@ def trainNN():
     model.fit(reshaped_CR_tensor, reshaped_test_results, epochs=100) #vilken batch size?  #Input för NN, lista, där varje plats är matrix som i artikeln
     # model.evaluate(x_test, y_test, verbose=1
     # model.layers[3].output  # Output för NN, Behöver eventuellt ändra idex beroende på om dropout räknas som lager, vill få output från softmax
-    # model.summary() Få tag i info om modellens 
-    
-    
-    
+    # model.summary() Få tag i info om modellens
+
+   
 def make_predictionsNN():
-    
+   
     slicing_list = [(t-j)%10 for j in range(10) ]
     for i in range(n):
-        n_tensor[i] = np.array([R_4[slicing_list, i], R_8[slicing_list, i], R_16[slicing_list, i], 
+        n_tensor[i] = np.array([R_4[slicing_list, i], R_8[slicing_list, i], R_16[slicing_list, i],
         total_contact_i[slicing_list, i], contact_q[[slicing_list, i]]])
-
+ 
     resultNN = model.predict(n_tensor)
     return resultNN
     # agent_to_peter_index = index_list[t*test_capacity:(t+1)*test_capacity]
  
-    #Tensor for prediction regarding all agents
-    
-    
+    #Tensor for prediction regarding all agents 
+   
  
-    
-
 def deployNN():
     resultNN = make_predictionsNN()
     most_plausibly_sick_agents  = np.where(resultNN>0.995)[0]
     peter_isolate(most_plausibly_sick_agents)
-
+ 
     maybe_sick_agents = np.where((0.5<resultNN) & (resultNN<=0.995))[0]
     rising_probability_indexes = np.argsort(maybe_sick_agents)
     if len(list(rising_probability_indexes))>30:
@@ -72,20 +70,22 @@ def deployNN():
     else:
         returned_results = peter_test(rising_probability_indexes)
     # Gör något med returnerade resultaten också
-
-
+ 
+ 
 def __init__():
     x = np.floor(np.random.rand(n) * l)  # x coordinates
     y = np.floor(np.random.rand(n) * l)  # y coordinates
+    x_init = copy.deepcopy(x)
+    y_init = copy.deepcopy(y)
     S = np.zeros(n)  # status array, 0: Susceptiple, 1: Infected, 2: recovered, 3: Dead
     isolated = np.zeros(n)  # Isolation array, 0: not isolated, 1: Is currently in isolation
     temperatures = np.zeros(n, dtype='float16')  # temperature array
     tested = np.zeros(n)
     S[0:initial_infected] = 1  # Infect random agents
-    nx = x  # updated x
-    ny = y  # updated y
+    nx = copy.deepcopy(x)  # updated x
+    ny = copy.deepcopy(y)  # updated y
     setupNN()
-    return x, y, S, isolated, temperatures, tested, nx, ny
+    return x_init, y_init, x, y, S, isolated, temperatures, tested, nx, ny
  
  
 # Plots graph
@@ -106,14 +106,19 @@ def plot_sir():
     ax.set_title('Infection plot')
     ax.legend()
     plt.show()
- 
- 
+
+
 def update_position():
-    steps_x_or_y = np.random.rand(n)
-    steps_x = steps_x_or_y < D / 2
-    steps_y = (steps_x_or_y > D / 2) & (steps_x_or_y < D)
-    nx = (x + np.sign(np.random.randn(n)) * steps_x) % l
-    ny = (y + np.sign(np.random.randn(n)) * steps_y) % l
+    k = 0.04
+    for agent in range(n):
+        prob_x = [max(0,1/3 +k*(x[agent]-x_init[agent])), 1/3, max(0, 1/3-k*(x[agent]-x_init[agent]))]
+        prob_x /= sum(prob_x)
+        prob_y = [max(0, 1/3 +k*(y[agent]-y_init[agent])), 1/3, max(0, 1/3-k*(y[agent]-y_init[agent]))]
+        prob_y /= sum(prob_y)
+        dx = np.random.choice([-1, 0, 1], p=np.array(prob_x))
+        dy = np.random.choice([-1, 0, 1], p=np.array(prob_y))
+        nx[agent] += dx
+        ny[agent] += dy
     for i in np.where(((isolated != 0) | (S == 3)))[0]:
         nx[i] = x[i]
         ny[i] = y[i]
@@ -142,13 +147,13 @@ def gen_contacts():
  
     contact_i[t % 50] = sick_contact_list
     contact_tot[t % 50] = contact_list
-
+ 
     total_contact_i[t%10] = np.sum(contact_i, 0)
     total_contact_tot[t%10] = np.sum(contact_tot, 0)
  
     contact_q[t % 10] =  np.nan_to_num(np.divide(np.sum(contact_i, 0),np.sum(contact_tot, 0)))
-
-
+ 
+ 
 def gen_R():  # Generatorfunktion för R-matriserna
  
     temp_r16 = np.zeros(n)
@@ -182,7 +187,7 @@ def gen_R():  # Generatorfunktion för R-matriserna
     R_8[t%10] = temp_r8
     R_4[t%10] = temp_r4
  
-
+ 
 def initial_testing():
     test_priority = np.argsort(temperatures)
     test_priority = test_priority[-100:-1]
@@ -193,32 +198,33 @@ def initial_testing():
         if S[to_be_tested[agents]] == 1:
             testing_outcome[agents] = 1
             isolated[to_be_tested[agents]] = 1
-
+ 
     test_results[t] = testing_outcome
     index_list[t*test_capacity:(t+1)*test_capacity] = to_be_tested
-
+ 
     gen_information_to_peter(to_be_tested)
-
-
+ 
+ 
 def gen_information_to_peter(to_be_tested):
     # agent_to_peter_index = index_list[t*test_capacity:(t+1)*test_capacity]
  
     #Tensor for prediction regarding all agents
     slicing_list = [(t-j)%10 for j in range(10) ]
-    
+   
  
     for i in range(test_capacity):
         k = to_be_tested[i]
-        CR_tensor[t][i] = np.array([R_4[slicing_list, k] , R_8[slicing_list, k], R_16[slicing_list, k], 
+        CR_tensor[t][i] = np.array([R_4[slicing_list, k] , R_8[slicing_list, k], R_16[slicing_list, k],
         total_contact_i[slicing_list, k], contact_q[slicing_list, k]])
-    
+   
     information_tensor[t*test_capacity:(t+1)*test_capacity] = CR_tensor[t]
  
+ 
 def peter_test(peter_test_list):
-    
+   
     results_from_peters_test = np.zeros(test_capacity)
     i = 0
-    
+   
     for agent in peter_test_list:
         if S[agent] == 1:
             results_from_peters_test[i] = 1
@@ -228,10 +234,10 @@ def peter_test(peter_test_list):
     return results_from_peters_test
  
 def peter_isolate(peter_isolate_list):
-
+ 
     for agent in peter_isolate_list:
         isolated[agent] = 1
-
+ 
  
 def man_made_test_agents():
     # Tests sick agents, if positive test then set in isolation and isolate neighbours in contactmatrix
@@ -255,7 +261,6 @@ def man_made_test_agents():
                     isolated[test_person] = 1
  
             i = i + 1
-        print('Time = ', t,'Tests made: ', tests_made)
  
  
 def update_states():
@@ -279,22 +284,88 @@ def set_temps():
         temperatures[i] = np.random.normal(36.8, 1.0)
  
  
-if __name__ == '__main__':
-   
-    # Parameters of the simulation
-    n = 800  # Number of agents
-    initial_infected = 10  # Initial infected agents
+if __name__ == '__main__': 
+    # Currently fixed parameters of the simulation
+    n = 1  # Number of agents
+    initial_infected = 0  # Initial infected agents
     N = 1000  # Simulation time
-    l = 30  # Lattice size
+    l =   70# Lattice size
+ 
+    #initiate the lists
+    x_init, y_init, x, y, S, isolated, temperatures, tested, nx, ny = __init__()
+    set_temps()
+ 
+    # All things related to the GUI
+ 
+    res = 500  # Animation resolution
+    tk = Tk()
+    tk.geometry(str(int(res * 1.5)) + 'x' + str(int(res * 1.7)))
+    tk.configure(background='white')
+ 
+    canvas = Canvas(tk, bd=2)  # Generate animation window
+    tk.attributes('-topmost', 0)
+    canvas.place(x=res / 20, y=res / 20, height=res*1.4, width=res*1.5)
+    ccolor = ['#0008FF', '#DB0000', '#12F200', '#68228B', '#000000']
+ 
+    show_plot = Button(tk, text='Plot', command=plot_sir)
+    show_plot.place(relx=0.05, rely=0.85, relheight=0.04, relwidth=0.15)
    
-    D_noll = 0.8
+    def restart():
+        num_of_cities = cities.get()
+        n = num_of_agents.get()
+        l = lattice_size.get()
+        S = np.zeros(n)
+        if num_of_cities == 2:
+            S[0:initial_infected//2] = 1
+            S[n//2:(n+initial_infected)//2] = 1
+        elif num_of_cities == 4:
+            S[0:initial_infected//4] = 1
+            S[n//4:(n+initial_infected)//4] = 1
+            S[n//4: n//2 + initial_infected//4] = 1
+            S[3*n//4: 3*n//4+initial_infected//4] = 1
+       
+    rest = Button(tk, text='Restart',command= restart)
+    rest.place(relx=0.05, rely=.9, relheight= 0.04, relwidth= 0.15 )
+ 
+    Beta = Scale(tk, from_=0, to=1, orient=HORIZONTAL, label='Infection probability', font=("Helvetica", 8),resolution=0.01)
+    Beta.place(relx=.22, rely=.85, relheight= 0.08, relwidth= 0.23)    
+    Beta.set(0.8)            # Parameter slider for infection rate                                                      
+ 
+    Gamma = Scale(tk, from_=0, to=0.1, orient=HORIZONTAL, label='Recovery rate', font=("Helvetica", 8) ,resolution=0.001)
+    Gamma.place(relx=.47, rely=.85, relheight= 0.08, relwidth= 0.23)
+    Gamma.set(0.01)          # Parameter slider for recovery rate
+ 
+   
+    Diff = Scale(tk, from_=0, to=1, orient=HORIZONTAL, label='Diffusion probability', font=("Helvetica", 8),resolution=0.01)
+    Diff.place(relx=.72, rely=.85, relheight= 0.08, relwidth= 0.23)
+    Diff.set(0.5)            # Parameter slider for diffusion rate
+ 
+    Mortality = Scale(tk, from_=0, to=1, orient=HORIZONTAL, label='Mortality probability', font=("Helvetica", 8),resolution=0.01)
+    Mortality.place(relx=.72, rely=.93, relheight= 0.08, relwidth= 0.23)
+    Mortality.set(0.01)            # Parameter slider for Mortality
+ 
+ 
+    particles = []
+    R = .5  # agent plot radius
+    for j in range(n):  # Generate animated particles in Canvas
+        particles.append(canvas.create_oval((x[j]) * res / l,
+                                            (y[j]) * res / l,
+                                            (x[j] + 2 * R) * res / l,
+                                            (y[j] + 2 * R) * res / l,
+                                            outline=ccolor[0], fill=ccolor[0]))
+ 
+ 
+ 
+   
+   
+    D_noll = Diff.get()
     D_reduced = 0.1
  
     D = D_noll
-    B = 0.6
-    G = 0.03
+    B = Beta.get()
+    G = Gamma.get()
+    My = Mortality.get()
  
-    My = 0.02
     start_lock = 50
     lockdown_enabled = False
     test_capacity = 30
@@ -303,9 +374,7 @@ if __name__ == '__main__':
     peter_start_time = 20
  
  
-    #initiate the lists
-    x, y, S, isolated, temperatures, tested, nx, ny = __init__()
-    set_temps()
+   
  
  
     # Contact matrix
@@ -313,16 +382,16 @@ if __name__ == '__main__':
     contact_i = np.zeros((50, n), dtype='int16')
     total_contact_tot = np.zeros((10, n), dtype='int16')
     total_contact_i = np.zeros((10, n), dtype='int16')
-    
+   
     contact_q = np.zeros((50, n), dtype='float16')
     R_4 = np.zeros((10, n))
     R_8 = np.zeros((10, n))
     R_16 = np.zeros((10, n))
-    
-
+   
+ 
     CR_tensor = np.zeros((peter_start_time, test_capacity,5,10))
     n_tensor = np.zeros((n,5,10))
-
+ 
     information_tensor = np.zeros((20*test_capacity, 5, 10))
     test_results = np.zeros((20,test_capacity))
  
@@ -338,46 +407,23 @@ if __name__ == '__main__':
     dead_history =  np.zeros(N)
     isolation_history = np.zeros(N)    
 
-
-     # Canvas info
-
-    res = 500  # Animation resolution
-    tk = Tk()
-    tk.geometry(str(int(res * 1.1)) + 'x' + str(int(res * 1.3)))
-    tk.configure(background='white')
-
-    canvas = Canvas(tk, bd=2)  # Generate animation window
-    tk.attributes('-topmost', 0)
-    canvas.place(x=res / 20, y=res / 20, height=res, width=res)
-    ccolor = ['#0008FF', '#DB0000', '#12F200', '#68228B', '#000000']
-
-    show_plot = Button(tk, text='Plot', command=plot_sir)
-    show_plot.place(relx=0.05, rely=0.85, relheight=0.06, relwidth=0.15)
-
-    particles = []
-    R = .5  # agent plot radius
-    for j in range(n):  # Generate animated particles in Canvas
-        particles.append(canvas.create_oval((x[j]) * res / l,
-                                            (y[j]) * res / l,
-                                            (x[j] + 2 * R) * res / l,
-                                            (y[j] + 2 * R) * res / l,
-                                            outline=ccolor[0], fill=ccolor[0]))
-
-   
-
-    model = setupNN()
  
-    while t < 1000 and list(np.where(S == 1)[0]):
+    # model = setupNN()
+ 
+    while t < N: #and list(np.where(S == 1)[0]):
         nx, ny = update_position()
         update_states()
+       
         if t<20:
-            initial_testing()
+            man_made_test_agents()
         if t == 20:
-            trainNN()    
+            #trainNN()  
+            pass
         if t>20:
-            deployNN()
-        
-
+            #deployNN()
+            pass
+       
+ 
         for j in range(n):
             canvas.move(particles[j], (nx[j] - x[j]) * res / l, (ny[j] - y[j]) * res / l)  # Plot update - Positions
             canvas.itemconfig(particles[j], outline='#303030',
@@ -391,8 +437,8 @@ if __name__ == '__main__':
         else:
             D = D_noll
  
-        x = nx  # Update x
-        y = ny  # Update y
+        x = copy.deepcopy(nx)  # Update x
+        y = copy.deepcopy(ny)  # Update y
  
         # Used for plotting the graph
         susceptible_history[t] =  len(list(np.where(S == 0)[0]))
@@ -403,7 +449,7 @@ if __name__ == '__main__':
  
         t += 1
  
-        if t % 90 == 0:
+        if t % 9000 == 0:
             plot_sir()
  
-    Tk.mainloop(canvas) 
+    Tk.mainloop(canvas)

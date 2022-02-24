@@ -107,7 +107,7 @@ def plot_sir():
     plt.show()
  
  
-def update_position():
+def update_position_old():
     steps_x_or_y = np.random.rand(n)
     steps_x = steps_x_or_y < D / 2
     steps_y = (steps_x_or_y > D / 2) & (steps_x_or_y < D)
@@ -117,6 +117,25 @@ def update_position():
         nx[i] = x[i]
         ny[i] = y[i]
     return nx, ny
+
+
+def update_position():
+    C = 0.04
+    for k in np.where(((isolated != 0) | (S == 3)))[0]:
+        p_x_plus = (1/3 + C*(nx[k] - x[k]))
+        p_x_minus = (1/3 - C*(nx[k] - x[k]))
+        p_x_zero = 1/3
+        p_y_plus = (1/3 + C*(ny[k] - y[k]))
+        p_y_minus = (1/3 - C*(ny[k] - y[k]))
+        p_y_zero = 1/3
+        probability_x = np.array([p_x_plus, p_x_zero, p_x_minus])
+        probability_y = np.array([p_y_plus, p_y_zero, p_y_minus])
+        dx = np.random.choice([1, 0, -1], p=probability_x)
+        dy = np.random.choice([1, 0, -1], p=probability_y)
+        nx[k] += dx
+        ny[k] += dy
+    return nx, ny
+    
  
  
 def gen_contacts():

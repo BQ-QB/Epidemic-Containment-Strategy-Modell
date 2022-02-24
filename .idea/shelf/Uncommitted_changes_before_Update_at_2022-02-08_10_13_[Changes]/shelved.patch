@@ -1,0 +1,51 @@
+Index: sir_based.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import numpy as np \r\nfrom tkinter import *\r\nimport matplotlib.pyplot as plt\r\n\r\nres = 500   # Animation resolution\r\ntk = Tk()  \r\ntk.geometry(str(int(res*1.1)) + 'x' + str(int(res*1.3)))\r\ntk.configure(background='white')\r\n\r\ncanvas = Canvas(tk, bd=2)            # Generate animation window \r\ntk.attributes('-topmost', 0)\r\ncanvas.place(x=res/20, y=res/20, height=res, width=res)\r\nccolor = ['#0008FF', '#DB0000', '#12F200', '#68228B', '#000000']\r\n\r\n\r\ndef restart():\r\n    global S\r\n    I = np.argsort((x-l/2)**2 + (y-l/2)**2)\r\n    S = np.zeros(n) \r\n    S[I[1:initial_infected]] = 1\r\n\r\n\r\ndef plot_sir():\r\n    temp1 = SH.shape[0]\r\n    temp1 = np.array([i for i in range(temp1)])\r\n    fig = plt.figure()\r\n    ax = fig.add_subplot(1, 1, 1)\r\n    label1 = 'Susceptible = ' + str(SH[-1])\r\n    label2 = 'Recovered = ' + str(RH[-1])\r\n    label3 = 'Infected = ' + str(IH[-1])\r\n    label4 = 'Dead = ' + str(DH[-1])\r\n    ax.plot(temp1, SH, color='yellow', label=label1)\r\n    ax.plot(temp1, RH, color='blue', label=label2)\r\n    ax.plot(temp1, IH, color='red', label=label3)\r\n    ax.plot(temp1, DH, color='purple', label=label4)\r\n    ax.set_title('Infection plot')\r\n    ax.legend()\r\n    plt.show()\r\n\r\n\r\nshowPlot = Button(tk, text='Plot', command=plot_sir)\r\nshowPlot.place(relx=0.05, rely=0.85, relheight=0.06, relwidth=0.15)\r\n\r\nrest = Button(tk, text='Restart', command=restart)\r\nrest.place(relx=0.05, rely=.91, relheight=0.06, relwidth=0.15)\r\n\r\nBeta = Scale(tk, from_=0, to=1, orient=HORIZONTAL, label='Infection probability', font=(\"Helvetica\", 8), resolution=0.01)\r\nBeta.place(relx=.22, rely=.85, relheight=0.12, relwidth=0.23)\r\nBeta.set(1)            # Parameter slider for infection rate                                                       \r\n\r\nGamma = Scale(tk, from_=0, to=0.1, orient=HORIZONTAL, label='Recovery rate', font=(\"Helvetica\", 8), resolution=0.001)\r\nGamma.place(relx=.47, rely=.85, relheight=0.12, relwidth=0.23)\r\nGamma.set(0.01)          # Parameter slider for recovery rate\r\n\r\nDiff = Scale(tk, from_=0, to=1, orient=HORIZONTAL, label='Diffusion probability', font=(\"Helvetica\", 8), resolution=0.01)\r\nDiff.place(relx=.72, rely=.85, relheight=0.12, relwidth=0.23)\r\nDiff.set(0.5)            # Parameter slider for diffusion rate\r\n\r\n\r\n# Parameters of the simulation\r\nn = 8       # Number of agents \r\ninitial_infected = 4   # Initial infected agents\r\nN = 100000  # Simulation time\r\nl = 50     # Lattice size\r\n\r\n# Historylists used for plotting SIR-graph\r\nIH = np.array([initial_infected-1])\r\nSH = np.array([n-initial_infected+1])\r\nRH = np.array([0])\r\nDH = np.array([0])\r\n\r\n#Contact matrix\r\nContact = -1*np.ones((n, 5))\r\n\r\n\r\n# Physical parameters of the system \r\nx = np.floor(np.random.rand(n)*l)          # x coordinates            \r\ny = np.floor(np.random.rand(n)*l)          # y coordinates  \r\nS = np.zeros(n)                            # status array, 0: Susceptiple, 1: Infected, 2: recovered, 3: Dead \r\nIsolated = np.zeros(n)                     # Isolation array, 0: not isolated, 1: Is currently in isolation\r\ntoBeTested = np.zeros(n)                   # test array; 0: Should not be isolated, 1: Positive test, should be isolated \r\nQ = np.zeros(n)                            # temperature array\r\nI = np.argsort((x-l/2)**2 + (y-l/2)**2)\r\nS[1:initial_infected] = 1              # Infect agents that are close to center \r\n\r\nnx = x                           # updated x                  \r\nny = y                           # updated y  \r\n\r\nlockdown = True\r\n\r\nparticles = []\r\nR = .5                          # agent plot radius \r\nfor j in range(n):     # Generate animated particles in Canvas \r\n    particles.append(canvas.create_oval((x[j])*res/l,\r\n                                         (y[j])*res/l,\r\n                                         (x[j]+2*R)*res/l,\r\n                                         (y[j]+2*R)*res/l,\r\n                                         outline=ccolor[0], fill=ccolor[0]))\r\n\r\n\r\ndef set_temps():\r\n    for i in np.where(S == 1)[0]:\r\n        Q[i] = np.random.normal(40,1)\r\n        print(Q[i])\r\n    for i in np.where(Q == 0)[0]:\r\n        Q[i] = np.random.normal(36,1)\r\n\r\n\r\nt = 0\r\nset_temps()\r\nB = Beta.get()\r\nG = Gamma.get()\r\nD = Diff.get()\r\nMy = 0.00\r\n\r\n\r\nwhile t < 1000 and list(np.where(S == 1)[0]):\r\n\r\n    steps_x_or_y = np.random.rand(n)\r\n    steps_x = steps_x_or_y < D/2\r\n    steps_y = (steps_x_or_y > D/2) & (steps_x_or_y < D)\r\n    nx = (x + np.sign(np.random.randn(n)) * steps_x) % l \r\n    ny = (y + np.sign(np.random.randn(n)) * steps_y) % l\r\n    for i in np.where(((Isolated != 0) | (S == 3))):\r\n        nx[i] = x[i]\r\n        ny[i] = y[i]\r\n\r\n    for i in np.where((Isolated != 1) & (S == 1) & (np.random.random(n) < B))[0]:     # loop over infecting agents\r\n        Q[(x == x[i]) & (y == y[i]) & (S == 0)] = np.random.normal(40, 1)          # Raise newly sick agents temperatures\r\n        S[(x == x[i]) & (y == y[i]) & (S == 0)] = 1         # Susceptiples together with infecting agent becomes infected\r\n\r\n    for i in np.where((S == 1) & (np.random.random(n) < My))[0]:\r\n        S[i] = 3\r\n\r\n    templist = np.where((S == 1) & (np.random.rand(n) < G))[0]\r\n    S[templist] = 2         # Recovery\r\n    # Isolated[ templist ] = 0\r\n    Q[templist] = np.random.normal(36, 1)\r\n\r\n    for j in range(n):\r\n        canvas.move(particles[j], (nx[j]-x[j]) * res/l, (ny[j]-y[j])*res/l)         # Plot update - Positions\r\n        canvas.itemconfig(particles[j], outline='#303030', fill=ccolor[int(S[j]) if Isolated[j] == 0 else 4])  # Plot update - Colors\r\n    tk.update()\r\n    tk.title('Infected:' + str(np.sum(S==1)))\r\n\r\n    # Management of contactmatrix\r\n    for i in range(n):\r\n\r\n        proximitylist = np.where((x == x[i]) & (y == y[i]))\r\n        \r\n        for j in range(min(5, len(proximitylist[0]))):\r\n            Contact[i][j] = proximitylist[0][j]\r\n           \r\n\r\n\r\n    # Tests sick agents, if positive test then set in isolation\r\n    if t > 5:\r\n\r\n        testCapacity = 10\r\n        testPriority = np.argsort(Q)\r\n        \r\n        i = 0\r\n        while i < testCapacity:\r\n            if Isolated[testPriority[n-1-i]] != 1:\r\n                if int(S[testPriority[n-1-i]]) == 1:\r\n                    Isolated[testPriority[n-i-1]] = 1\r\n                    for k in range(5):\r\n                        if Contact[testPriority[n-i-1]][k] != -1:\r\n                            Isolated[int(Contact[testPriority[n-i-1]][k])] = 1\r\n                            print(int(Contact[testPriority[n-i-1]][k]))\r\n\r\n            i = i+1\r\n\r\n\r\n    # lockdown loop\r\n    startLock = 50\r\n    if startLock < t < startLock + 200 and lockdown:\r\n        D = 0.1\r\n    else: D = Diff.get()\r\n\r\n    x = nx                                              # Update x \r\n    y = ny                                              # Update y \r\n\r\n    SH = np.append(SH, len(list(np.where(S == 0)[0])))\r\n    IH = np.append(IH, len(list(np.where(S == 1)[0])))\r\n    RH = np.append(RH, len(list(np.where(S == 2)[0])))\r\n    DH = np.append(DH, len(list(np.where(S == 3)[0])))\r\n    t += 1\r\n\r\n    if t % 300 == 0:\r\n        plot_sir()\r\n\r\nTk.mainloop(canvas)                                     # Release animation handle (close window to finish) 
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/sir_based.py b/sir_based.py
+--- a/sir_based.py	(revision 35ef03b2c4ec2c3a8b7cf689f1f28cc834140ea4)
++++ b/sir_based.py	(date 1644311619005)
+@@ -58,8 +58,8 @@
+ 
+ 
+ # Parameters of the simulation
+-n = 8       # Number of agents 
+-initial_infected = 4   # Initial infected agents
++n = 800       # Number of agents
++initial_infected = 40   # Initial infected agents
+ N = 100000  # Simulation time
+ l = 50     # Lattice size
+ 
+@@ -101,7 +101,7 @@
+ def set_temps():
+     for i in np.where(S == 1)[0]:
+         Q[i] = np.random.normal(40,1)
+-        print(Q[i])
++        #print(Q[i])
+     for i in np.where(Q == 0)[0]:
+         Q[i] = np.random.normal(36,1)
+ 
+@@ -167,8 +167,8 @@
+                     for k in range(5):
+                         if Contact[testPriority[n-i-1]][k] != -1:
+                             Isolated[int(Contact[testPriority[n-i-1]][k])] = 1
+-                            print(int(Contact[testPriority[n-i-1]][k]))
+-
++                            #print(int(Contact[testPriority[n-i-1]][k]))
++            print(len(Isolated))
+             i = i+1
+ 
+ 
+@@ -176,7 +176,8 @@
+     startLock = 50
+     if startLock < t < startLock + 200 and lockdown:
+         D = 0.1
+-    else: D = Diff.get()
++    else:
++        D = Diff.get()
+ 
+     x = nx                                              # Update x 
+     y = ny                                              # Update y 

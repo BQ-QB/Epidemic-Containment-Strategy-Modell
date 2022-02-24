@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="f56a4611-f923-4b44-91c4-735fbad29b63" name="Changes" comment="Lagt till NN" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="24oqDc9El9PWzUYlUjdEtqgipj0" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+  </component>
+  <component name="PyConsoleOptionsProvider">
+    <option name="myPythonConsoleState">
+      <console-settings sdk-home="C:\Users\amand\PycharmProjects\pythonProject\venv\Scripts\python.exe">
+        <option name="mySdkHome" value="C:\Users\amand\PycharmProjects\pythonProject\venv\Scripts\python.exe" />
+      </console-settings>
+    </option>
+  </component>
+  <component name="RunManager" selected="Python.sir_based">
+    <configuration name="sir_based" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="C:\Users\amand\PycharmProjects\pythonProject\venv\Scripts\python.exe" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/sir_based.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="test" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="C:\Users\amand\PycharmProjects\pythonProject\venv\Scripts\python.exe" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Python.sir_based" />
+      <item itemvalue="Python.test" />
+    </list>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="f56a4611-f923-4b44-91c4-735fbad29b63" name="Changes" comment="" />
+      <created>1644307169191</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1644307169191</updated>
+    </task>
+    <task id="LOCAL−00001" summary="Ändrade namn på plotSir till plot_sir">
+      <created>1644308904728</created>
+      <option name="number" value="LOCAL−00001" />
+      <option name="presentableId" value="LOCAL−00001" />
+      <updated>1644308904728</updated>
+    </task>
+    <task id="LOCAL−00002" summary="Ändrat mellanrum med mera">
+      <created>1644309789683</created>
+      <option name="number" value="LOCAL−00002" />
+      <option name="presentableId" value="LOCAL−00002" />
+      <updated>1644309789683</updated>
+    </task>
+    <task id="LOCAL−00003" summary="Jag har lagt till funtionen update_position() och programmet fungerar fortfarande">
+      <created>1644320391724</created>
+      <option name="number" value="LOCAL−00003" />
+      <option name="presentableId" value="LOCAL−00003" />
+      <updated>1644320391724</updated>
+    </task>
+    <task id="LOCAL−00004" summary="Lagt till test_agents och update_states samt att agenterna som är isolerade  också ändrar färg när dom är friska igen.">
+      <created>1644322698077</created>
+      <option name="number" value="LOCAL−00004" />
+      <option name="presentableId" value="LOCAL−00004" />
+      <updated>1644322698077</updated>
+    </task>
+    <task id="LOCAL−00005" summary="Adderade de två översta looparna i update_states()">
+      <created>1644326474917</created>
+      <option name="number" value="LOCAL−00005" />
+      <option name="presentableId" value="LOCAL−00005" />
+      <updated>1644326474917</updated>
+    </task>
+    <task id="LOCAL−00006" summary="Skapat en __init__()">
+      <created>1644326728871</created>
+      <option name="number" value="LOCAL−00006" />
+      <option name="presentableId" value="LOCAL−00006" />
+      <updated>1644326728871</updated>
+    </task>
+    <task id="LOCAL−00007" summary="Endast flyttat på set_temps()">
+      <created>1644326818139</created>
+      <option name="number" value="LOCAL−00007" />
+      <option name="presentableId" value="LOCAL−00007" />
+      <updated>1644326818139</updated>
+    </task>
+    <task id="LOCAL−00008" summary="Strukturerat upp programmet">
+      <created>1644331421472</created>
+      <option name="number" value="LOCAL−00008" />
+      <option name="presentableId" value="LOCAL−00008" />
+      <updated>1644331421472</updated>
+    </task>
+    <task id="LOCAL−00009" summary="Mellanrum">
+      <created>1644412334560</created>
+      <option name="number" value="LOCAL−00009" />
+      <option name="presentableId" value="LOCAL−00009" />
+      <updated>1644412334560</updated>
+    </task>
+    <task id="LOCAL−00010" summary="Amandus version">
+      <created>1644509629701</created>
+      <option name="number" value="LOCAL−00010" />
+      <option name="presentableId" value="LOCAL−00010" />
+      <updated>1644509629702</updated>
+    </task>
+    <task id="LOCAL−00011" summary="Ändrat gen_R">
+      <created>1644563918628</created>
+      <option name="number" value="LOCAL−00011" />
+      <option name="presentableId" value="LOCAL−00011" />
+      <updated>1644563918629</updated>
+    </task>
+    <task id="LOCAL−00012" summary="Ändrat dim på total_contact_tot osv">
+      <created>1644567518732</created>
+      <option name="number" value="LOCAL−00012" />
+      <option name="presentableId" value="LOCAL−00012" />
+      <updated>1644567518732</updated>
+    </task>
+    <task id="LOCAL−00013" summary="Lagt till NN">
+      <created>1644568506240</created>
+      <option name="number" value="LOCAL−00013" />
+      <option name="presentableId" value="LOCAL−00013" />
+      <updated>1644568506240</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="origin/main" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+              <option name="TEXT_FILTER_SETTINGS">
+                <TextFilterSettings>
+                  <option name="MATCH_CASE" value="true" />
+                </TextFilterSettings>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Ändrade namn på plotSir till plot_sir" />
+    <MESSAGE value="Ändrat mellanrum med mera" />
+    <MESSAGE value="Jag har lagt till funtionen update_position() och programmet fungerar fortfarande" />
+    <MESSAGE value="Lagt till test_agents och update_states samt att agenterna som är isolerade  också ändrar färg när dom är friska igen." />
+    <MESSAGE value="Adderade de två översta looparna i update_states()" />
+    <MESSAGE value="Skapat en __init__()" />
+    <MESSAGE value="Endast flyttat på set_temps()" />
+    <MESSAGE value="Strukturerat upp programmet" />
+    <MESSAGE value="Mellanrum" />
+    <MESSAGE value="Amandus version" />
+    <MESSAGE value="Ändrat gen_R" />
+    <MESSAGE value="Ändrat dim på total_contact_tot osv" />
+    <MESSAGE value="Lagt till NN" />
+    <option name="LAST_COMMIT_MESSAGE" value="Lagt till NN" />
+  </component>
+</project>
