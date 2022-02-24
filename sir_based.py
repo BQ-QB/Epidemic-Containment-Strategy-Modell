@@ -307,13 +307,18 @@ def set_age_groups():
 
 
 def mutation():
-    global is_mutation # is_mutation needs to be in correct scope
-    is_mutation = True
     B = 0.8
     B_recovered = 0.2 # probability of recovered agent being reinfected
     G = 0.03
     My = 0.01
     return B, B_recovered, G, My
+
+def mutate():
+    global is_mutation, B, B_recovered, G, My
+    is_mutation = True
+    print("Disease has mutated!")
+    B, B_recovered, G, My = mutation()
+    print("New values are, B=", B, ", B_recovered=", B_recovered, ", G=", G, ", My=", My)
 
 
 def disease():
@@ -323,9 +328,9 @@ def disease():
     My_old = 0.3
     return B, G, My, My_old
 
- 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
+    
     old_infected = 0
     old_kill_count = 0
 
@@ -395,6 +400,9 @@ if __name__ == '__main__':
     canvas.place(x=res / 20, y=res / 20, height=res, width=res)
     ccolor = ['#0008FF', '#DB0000', '#12F200', '#68228B', '#000000']
 
+    mutateBtn = Button(tk, text="Mutate", command=mutate)
+    mutateBtn.place(relx=0.25, rely=0.85, relheight=0.06, relwidth=0.15)
+
     show_plot = Button(tk, text='Plot', command=plot_sir)
     show_plot.place(relx=0.05, rely=0.85, relheight=0.06, relwidth=0.15)
 
@@ -408,8 +416,11 @@ if __name__ == '__main__':
                                             outline=ccolor[0], fill=ccolor[0]))
 
     model = setupNN()
+
+
  
     while t < 1000 and list(np.where(S == 1)[0]):
+
         nx, ny = update_position()
         update_states()
         if t<20:
@@ -418,10 +429,7 @@ if __name__ == '__main__':
             trainNN()    
         if t>20:
             deployNN()
-        if t==40:
-            print("Disease has mutated!")
-            B, B_recovered, G, My = mutation()
-            print("New values are, B=", B, ", B_recovered=", B_recovered, ", G=", G, ", My=", My)
+            
             
         for j in range(n):
             canvas.move(particles[j], (nx[j] - x[j]) * res / l, (ny[j] - y[j]) * res / l)  # Plot update - Positions
