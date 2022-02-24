@@ -400,6 +400,7 @@ if __name__ == '__main__':
     canvas.place(x=res / 20, y=res / 20, height=res, width=res)
     ccolor = ['#0008FF', '#DB0000', '#12F200', '#68228B', '#000000']
 
+    # test
     mutateBtn = Button(tk, text="Mutate", command=mutate)
     mutateBtn.place(relx=0.25, rely=0.85, relheight=0.06, relwidth=0.15)
 
