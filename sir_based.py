@@ -50,7 +50,7 @@ def make_predictionsNN():
         n_tensor[i] = np.array([R_4[slicing_list, i], R_8[slicing_list, i], R_16[slicing_list, i], 
         total_contact_i[slicing_list, i], contact_q[slicing_list, i]])
 
-    resultNN = model.predict(n_tensor)
+    resultNN = model.predict(np.reshape(n_tensor, (n, 50)))
     return resultNN
     # agent_to_peter_index = index_list[t*test_capacity:(t+1)*test_capacity]
  
@@ -68,7 +68,7 @@ def deployNN():
     maybe_sick_agents = np.where((0.5<resultNN) & (resultNN<=0.995))[0]
     rising_probability_indexes = np.argsort(maybe_sick_agents)
     if len(list(rising_probability_indexes))>30:
-        returned_results = peter_test(rising_probability_indexes[-30:-1])
+        returned_results = peter_test(rising_probability_indexes[-31:-1])
     else:
         returned_results = peter_test(rising_probability_indexes)
     # Gör något med returnerade resultaten också
