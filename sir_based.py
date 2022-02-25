@@ -89,6 +89,7 @@ def __init__():
  
 # Plots graph
 def plot_sir():
+    global mutate_time
     index_list_for_plot = np.array([i for i in range(t)])
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
@@ -102,6 +103,8 @@ def plot_sir():
     ax.plot(index_list_for_plot, infected_history[:t], color='red', label=label_infected)
     ax.plot(index_list_for_plot, dead_history[:t], color='purple', label=label_dead)
     ax.plot(index_list_for_plot, isolation_history[:t], color='black', label=label_isolation)
+    if mutate_time > 0:
+        plt.axvline(x=mutate_time, ymin=0, ymax=100, linestyle=':', color='orange', label=f'Mutation at t={mutate_time}')
     ax.set_title('Infection plot')
     ax.legend()
     plt.show()
@@ -296,6 +299,7 @@ def set_age_groups():
     A==0 => young, A==1 => adult, A==2 => old
     assuming that population rougly has a 20-60-20 distribution
     '''
+    # maybe implement so user can choose distribution?
     for i in range(n):
         rand = np.random.random_sample()
         if (rand<=0.2):
@@ -307,6 +311,10 @@ def set_age_groups():
 
 
 def mutation():
+    '''
+    Declaration of mutation paramaters.
+    '''
+    # maybe should be normally distributed around some value instead of the same?
     B = 0.8
     B_recovered = 0.2 # probability of recovered agent being reinfected
     G = 0.03
@@ -314,14 +322,23 @@ def mutation():
     return B, B_recovered, G, My
 
 def mutate():
-    global is_mutation, B, B_recovered, G, My
+    '''
+    A function which is connected to the mutateBtn.
+    Assign values of the mutation to the correct variables.
+    '''
+    global is_mutation, B, B_recovered, G, My, mutate_time
     is_mutation = True
-    print("Disease has mutated!")
+    mutate_time = t
     B, B_recovered, G, My = mutation()
+    print("Disease has mutated!")
     print("New values are, B=", B, ", B_recovered=", B_recovered, ", G=", G, ", My=", My)
 
 
 def disease():
+    '''
+    Disease paramaters
+    '''
+    # unsure how well My_old works, have tried to test it but didn't come to any conclusion
     B = 0.6
     G = 0.03
     My = 0.02
@@ -330,7 +347,7 @@ def disease():
 
 
 if __name__ == '__main__':
-    
+    mutate_time = 0
     old_infected = 0
     old_kill_count = 0
 
