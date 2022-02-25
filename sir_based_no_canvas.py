@@ -107,7 +107,7 @@ def plot_sir():
     plt.show()
  
  
-def update_position_old():
+def update_position_random_walk():
     steps_x_or_y = np.random.rand(n)
     steps_x = steps_x_or_y < D / 2
     steps_y = (steps_x_or_y > D / 2) & (steps_x_or_y < D)

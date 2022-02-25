@@ -49,9 +49,9 @@ def make_predictionsNN():
     slicing_list = [(t-j)%10 for j in range(10) ]
     for i in range(n):
         n_tensor[i] = np.array([R_4[slicing_list, i], R_8[slicing_list, i], R_16[slicing_list, i],
-        total_contact_i[slicing_list, i], contact_q[[slicing_list, i]]])
+        total_contact_i[slicing_list, i], contact_q[slicing_list, i]])
  
-    resultNN = model.predict(n_tensor)
+    resultNN = model.predict(np.reshape(n_tensor, (n, 50)))
     return resultNN
     # agent_to_peter_index = index_list[t*test_capacity:(t+1)*test_capacity]
  
@@ -66,13 +66,34 @@ def deployNN():
     maybe_sick_agents = np.where((0.5<resultNN) & (resultNN<=0.995))[0]
     rising_probability_indexes = np.argsort(maybe_sick_agents)
     if len(list(rising_probability_indexes))>30:
-        returned_results = peter_test(rising_probability_indexes[-30:-1])
+        returned_results = peter_test(rising_probability_indexes[-31:-1])
     else:
         returned_results = peter_test(rising_probability_indexes)
     # Gör något med returnerade resultaten också
  
+def init_mult():
+    x = np.zeros(n)
+    y = np.zeros(n)
+    S = np.zeros(n)  # status array, 0: Susceptiple, 1: Infected, 2: Recovered, 3: Dead
  
+    for i in range(num_of_cities):
+        S[i*n//num_of_cities: (i*n//num_of_cities + initial_infected//num_of_cities)] = 1
+        citizenship[i*n//num_of_cities: (i*n//num_of_cities + initial_infected//num_of_cities)] = i
+    x = np.floor(np.random.rand(n) * l/2)  
+    y = np.floor(np.random.rand(n) * l)
+    x_init = copy.deepcopy(x)
+    y_init = copy.deepcopy(y)
+    isolated = np.zeros(n)  # Isolation array, 0: not isolated, 1: Is currently in isolation
+    temperatures = np.zeros(n, dtype='float16')  # temperature array
+    tested = np.zeros(n)
+    nx = x  # updated x
+    ny = y  # updated y
+    return x_init, y_init, x, y, S, isolated, temperatures, tested, nx, ny
+
 def __init__():
+    if num_of_cities>1:
+        x_init, y_init, x, y, S, isolated, temperatures, tested, nx, ny = init_mult()
+        return x_init, y_init, x, y, S, isolated, temperatures, tested, nx, ny
     x = np.floor(np.random.rand(n) * l)  # x coordinates
     y = np.floor(np.random.rand(n) * l)  # y coordinates
     x_init = copy.deepcopy(x)
@@ -155,38 +176,73 @@ def gen_contacts():
  
  
 def gen_R():  # Generatorfunktion för R-matriserna
- 
+    if num_of_cities > 1 and False:
+        mult_gen_R()
+    else:
+        temp_r16 = np.zeros(n)
+        temp_r8 = np.zeros(n)
+        temp_r4 = np.zeros(n)
+        r16_squared = 256
+        r8_squared = 64
+        r4_squared = 16
+    
+    
+        sick_list = np.where((S==1)&(isolated !=1))[0]
+        xy_array = np.array([[x[i],y[i]] for i in range(n)])
+    
+        for sickos in sick_list:
+            sick_coords = np.array([x[sickos], y[sickos]])
+    
+            list_of_16_hits = np.where(np.sum((xy_array-sick_coords)**2 , axis = 1)<=r16_squared)
+            list_of_8_hits = np.where(np.sum((xy_array-sick_coords)**2 , axis = 1)<=r8_squared)
+            list_of_4_hits = np.where(np.sum((xy_array-sick_coords)**2 , axis = 1)<=r4_squared)
+    
+            temp_r16[list_of_16_hits] +=1
+            temp_r8[list_of_8_hits] +=1
+            temp_r4[list_of_4_hits] +=1
+    
+        # It should not count itself as a person in its vacinity, so remove 1 from the sick indexes
+        temp_r16[sick_list] -= 1
+        temp_r8[sick_list]  -= 1
+        temp_r4[sick_list]  -= 1
+    
+        R_16[t%10] = temp_r16
+        R_8[t%10] = temp_r8
+        R_4[t%10] = temp_r4
+
+def mult_gen_R():
     temp_r16 = np.zeros(n)
     temp_r8 = np.zeros(n)
     temp_r4 = np.zeros(n)
     r16_squared = 256
     r8_squared = 64
     r4_squared = 16
- 
-   
-    sick_list = np.where((S==1)&(isolated !=1))[0]
-    xy_array = np.array([[x[i],y[i]] for i in range(n)])
- 
-    for sickos in sick_list:
-        sick_coords = np.array([x[sickos], y[sickos]])
- 
-        list_of_16_hits = np.where(np.sum((xy_array-sick_coords)**2 , axis = 1)<=r16_squared)
-        list_of_8_hits = np.where(np.sum((xy_array-sick_coords)**2 , axis = 1)<=r8_squared)
-        list_of_4_hits = np.where(np.sum((xy_array-sick_coords)**2 , axis = 1)<=r4_squared)
- 
-        temp_r16[list_of_16_hits] +=1
-        temp_r8[list_of_8_hits] +=1
-        temp_r4[list_of_4_hits] +=1
-   
-    # It should not count itself as a person in its vacinity, so remove 1 from the sick indexes
-    temp_r16[sick_list] -= 1
-    temp_r8[sick_list]  -= 1
-    temp_r4[sick_list]  -= 1
- 
+
+    for i in range(num_of_cities):
+            
+        sick_list = np.where((S==1)&(isolated !=1)&(citizenship == i))[0]
+        xy_array = np.array([[x[i],y[i]] for i in np.where(citizenship == i)])
+
+        for sickos in sick_list:
+            sick_coords = np.array([x[sickos], y[sickos]])
+
+            list_of_16_hits = np.where(np.sum((xy_array-sick_coords)**2 , axis = 1)<=r16_squared)
+            list_of_8_hits = np.where(np.sum((xy_array-sick_coords)**2 , axis = 1)<=r8_squared)
+            list_of_4_hits = np.where(np.sum((xy_array-sick_coords)**2 , axis = 1)<=r4_squared)
+
+            temp_r16[list_of_16_hits] +=1
+            temp_r8[list_of_8_hits] +=1
+            temp_r4[list_of_4_hits] +=1
+
+        # It should not count itself as a person in its vacinity, so remove 1 from the sick indexes
+        temp_r16[sick_list] -= 1
+        temp_r8[sick_list]  -= 1
+        temp_r4[sick_list]  -= 1
+
     R_16[t%10] = temp_r16
     R_8[t%10] = temp_r8
     R_4[t%10] = temp_r4
- 
+
  
 def initial_testing():
     test_priority = np.argsort(temperatures)
@@ -280,16 +336,18 @@ def set_temps():
     for i in np.where(S == 1)[0]:
         temperatures[i] = np.random.normal(37.4, 1.2)
  
-    for i in np.where(temperatures == 0)[0]:
+    for i in np.where(S == 0)[0]:
         temperatures[i] = np.random.normal(36.8, 1.0)
  
+if __name__ == '__main__':
  
-if __name__ == '__main__': 
     # Currently fixed parameters of the simulation
-    n = 1  # Number of agents
-    initial_infected = 0  # Initial infected agents
+    n = 800  # Number of agents
+    initial_infected = 40  # Initial infected agents
     N = 1000  # Simulation time
-    l =   70# Lattice size
+    l = 30  # Lattice size
+    num_of_cities = 2
+    citizenship = np.zeros(n)
  
     #initiate the lists
     x_init, y_init, x, y, S, isolated, temperatures, tested, nx, ny = __init__()
@@ -297,33 +355,30 @@ if __name__ == '__main__':
  
     # All things related to the GUI
  
-    res = 500  # Animation resolution
+    geores = 500  # Animation resolution
+    res = geores*1.4
     tk = Tk()
-    tk.geometry(str(int(res * 1.5)) + 'x' + str(int(res * 1.7)))
+    tk.geometry(str(int(geores * 1.5)) + 'x' + str(int(geores * 1.9)))
     tk.configure(background='white')
  
     canvas = Canvas(tk, bd=2)  # Generate animation window
     tk.attributes('-topmost', 0)
-    canvas.place(x=res / 20, y=res / 20, height=res*1.4, width=res*1.5)
+    canvas.place(x=res / 20, y=res / 20, height=res, width=res)
     ccolor = ['#0008FF', '#DB0000', '#12F200', '#68228B', '#000000']
- 
-    show_plot = Button(tk, text='Plot', command=plot_sir)
-    show_plot.place(relx=0.05, rely=0.85, relheight=0.04, relwidth=0.15)
    
     def restart():
-        num_of_cities = cities.get()
-        n = num_of_agents.get()
-        l = lattice_size.get()
+        num_of_cities = num_of_cities_selector
+ 
+        # Consider if n and l should be modifieable
+        # n = num_of_agents.get()
+        # l = lattice_size.get()
         S = np.zeros(n)
-        if num_of_cities == 2:
-            S[0:initial_infected//2] = 1
-            S[n//2:(n+initial_infected)//2] = 1
-        elif num_of_cities == 4:
-            S[0:initial_infected//4] = 1
-            S[n//4:(n+initial_infected)//4] = 1
-            S[n//4: n//2 + initial_infected//4] = 1
-            S[3*n//4: 3*n//4+initial_infected//4] = 1
+        for i in range(num_of_cities):
+            S[i//num_of_cities[-1]:i//num_of_cities[-1] + initial_infected//num_of_cities[-1]]
        
+    show_plot = Button(tk, text='Plot', command=plot_sir)
+    show_plot.place(relx=0.05, rely=0.85, relheight=0.04, relwidth=0.15)
+ 
     rest = Button(tk, text='Restart',command= restart)
     rest.place(relx=0.05, rely=.9, relheight= 0.04, relwidth= 0.15 )
  
@@ -335,7 +390,6 @@ if __name__ == '__main__':
     Gamma.place(relx=.47, rely=.85, relheight= 0.08, relwidth= 0.23)
     Gamma.set(0.01)          # Parameter slider for recovery rate
  
-   
     Diff = Scale(tk, from_=0, to=1, orient=HORIZONTAL, label='Diffusion probability', font=("Helvetica", 8),resolution=0.01)
     Diff.place(relx=.72, rely=.85, relheight= 0.08, relwidth= 0.23)
     Diff.set(0.5)            # Parameter slider for diffusion rate
@@ -344,88 +398,83 @@ if __name__ == '__main__':
     Mortality.place(relx=.72, rely=.93, relheight= 0.08, relwidth= 0.23)
     Mortality.set(0.01)            # Parameter slider for Mortality
  
+    # Num of Socs selection
+    num_of_cities_selector = 0         # Creating a variable which will track the selected checkbutton
+    buttonlist = []                    # Empty list which is going to hold all the checkbuttons
+    available_num_of_societies = [1,2,4,6,8]                
+    for i in range(5):
+        buttonlist.append(Checkbutton(tk,text = i ,onvalue = available_num_of_societies[i], variable = num_of_cities_selector))  
+                          #Creating and adding checkbutton to list
+        buttonlist[i].place(relx =0.23 + 0.03*i, rely = .96 )
  
     particles = []
     R = .5  # agent plot radius
+    x_offset = np.zeros(n)
+    y_offset = np.zeros(n)
+    for i in range(n):
+        if i < n//2:
+            x_offset[i] = 0
+        else: x_offset[i] = l/2 +3
     for j in range(n):  # Generate animated particles in Canvas
-        particles.append(canvas.create_oval((x[j]) * res / l,
-                                            (y[j]) * res / l,
-                                            (x[j] + 2 * R) * res / l,
-                                            (y[j] + 2 * R) * res / l,
-                                            outline=ccolor[0], fill=ccolor[0]))
+            particles.append(canvas.create_oval((x[j]+ x_offset[j]) * res / l,
+                                                (y[j] +  y_offset[j]) * res / l,
+                                                (x[j] +  x_offset[j] + 2 * R) * res / l,
+                                                (y[j] +  y_offset[j]+ 2 * R) * res / l,
+                                                outline=ccolor[0], fill=ccolor[0]))
  
- 
- 
-   
-   
     D_noll = Diff.get()
     D_reduced = 0.1
- 
     D = D_noll
     B = Beta.get()
     G = Gamma.get()
     My = Mortality.get()
- 
     start_lock = 50
     lockdown_enabled = False
     test_capacity = 30
-   
     t = 0
     peter_start_time = 20
- 
- 
-   
- 
  
     # Contact matrix
     contact_tot = np.zeros((50, n), dtype='int16')
     contact_i = np.zeros((50, n), dtype='int16')
     total_contact_tot = np.zeros((10, n), dtype='int16')
     total_contact_i = np.zeros((10, n), dtype='int16')
-   
     contact_q = np.zeros((50, n), dtype='float16')
     R_4 = np.zeros((10, n))
     R_8 = np.zeros((10, n))
     R_16 = np.zeros((10, n))
-   
- 
     CR_tensor = np.zeros((peter_start_time, test_capacity,5,10))
     n_tensor = np.zeros((n,5,10))
- 
     information_tensor = np.zeros((20*test_capacity, 5, 10))
     test_results = np.zeros((20,test_capacity))
  
     # output_results = np.zeros(n)
- 
     index_list = np.zeros((150*test_capacity))
  
     # Plot lists
- 
     susceptible_history =  np.zeros(N)
     infected_history = np.zeros(N)
     recovered_history = np.zeros(N)
     dead_history =  np.zeros(N)
     isolation_history = np.zeros(N)    
-
+    model = setupNN()
  
-    # model = setupNN()
+    while t < 1000:
  
-    while t < N: #and list(np.where(S == 1)[0]):
+        # if dynamic_update: ... ? Vi kan lägga till så att endast om man har klickat i att man vill
+        # kunna ändra params under körning så uppdateras de
         nx, ny = update_position()
         update_states()
        
         if t<20:
-            man_made_test_agents()
+            initial_testing()
         if t == 20:
-            #trainNN()  
-            pass
+            trainNN()      
         if t>20:
-            #deployNN()
-            pass
-       
+            deployNN()
  
         for j in range(n):
-            canvas.move(particles[j], (nx[j] - x[j]) * res / l, (ny[j] - y[j]) * res / l)  # Plot update - Positions
+            canvas.move(particles[j], (nx[j] - x[j]) * res / l, (ny[j] - (y[j])) * res / l)  # Plot update - Positions
             canvas.itemconfig(particles[j], outline='#303030',
                               fill=ccolor[int(S[j]) if isolated[j] == 0 else 4])  # Plot update - Colors
         tk.update()
@@ -446,10 +495,9 @@ if __name__ == '__main__':
         recovered_history[t] = len(list(np.where(S == 2)[0]))
         dead_history[t] =  len(list(np.where(S == 3)[0]))
         isolation_history[t] = len(list(np.where(isolated == 1)[0]))
- 
         t += 1
  
-        if t % 9000 == 0:
+        if t % 90 == 0:
             plot_sir()
  
     Tk.mainloop(canvas)
