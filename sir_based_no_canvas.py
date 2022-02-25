@@ -47,7 +47,7 @@ def make_predictionsNN():
     slicing_list = [(t-j)%10 for j in range(10) ]
     for i in range(n):
         n_tensor[i] = np.array([R_4[slicing_list, i], R_8[slicing_list, i], R_16[slicing_list, i], 
-        total_contact_i[slicing_list, i], contact_q[[slicing_list, i]]])
+        total_contact_i[slicing_list, i], contact_q[slicing_list, i]])
 
     resultNN = model.predict(n_tensor)
     return resultNN
