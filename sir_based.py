@@ -8,18 +8,21 @@ def __init__():
     isolated = np.zeros(n)  # Isolation array, 0: not isolated, 1: Is currently in isolation
     temperatures = np.zeros(n, dtype='float16')  # temperature array
     tested = np.zeros(n)
-    aPosition = zip(x,y)
+    aPosition = list(zip(x,y))
     S[0:initial_infected] = 1  # Infect agents that are close to center
     nx = x  # updated x
     ny = y  # updated y
-    print(aPosition)
+
+    return x, y, S, isolated, temperatures, tested, nx, ny, aPosition
 
 
-    return x, y, S, isolated, temperatures, tested, nx, ny
+   
 
-def plot_canvas(t):
-    plt.plot()
-    pass
+ 
+
+    
+
+
 
 
 # Plots graph
@@ -130,6 +133,29 @@ def set_temps():
     for i in np.where(temperatures == 0)[0]:
         temperatures[i] = np.random.normal(36.8, 1.0)
 
+def update_fig(x,y,S):
+    sus = np.where(S==0)[0]
+    xSus = []
+    ySus = []
+    for index in sus:
+        xSus.append(x[index])
+        ySus.append(y[index])
+
+    xInf = []
+    yInf = []
+    inf = np.where(S==1)[0]
+    for index in inf:
+        xInf.append(x[index])
+        yInf.append(y[index])
+    
+    xRec = []
+    yRec = []
+    rec = np.where(S==2)[0]
+    for index in rec:
+        xInf.append(x[index])
+        yInf.append(y[index])
+    return xSus,ySus,xInf,yInf,xRec,yRec
+
 
 if __name__ == '__main__':
    
@@ -152,11 +178,10 @@ if __name__ == '__main__':
     start_lock = 50
     lockdown_enabled = False
     test_capacity = 30
-    x, y, S, isolated, temperatures, tested, nx, ny = __init__()
+    x, y, S, isolated, temperatures, tested, nx, ny, aPosition = __init__()
 
     set_temps()
     t = 0
-
 
     # Historylists used for plotting SIR-graph
     infected_history = np.array([initial_infected - 1])
@@ -182,18 +207,27 @@ if __name__ == '__main__':
     # output_results = np.zeros(n)
 
     index_list = np.zeros((150*test_capacity))
-       
-    
+
+    xSus,ySus,xInf,yInf,xRec,yRec = update_fig(x,y,S)
+
+    # to run GUI event loop
+    plt.ion()
+
+    # creating subplots
+    fig, ax = plt.subplots(figsize=(5, 5))
+
+    sus = ax.scatter(xSus,ySus,color='blue')
+    inf = ax.scatter(xInf,yInf,color='red')
+    rec = ax.scatter(xRec,yRec,color='green')
+
+    # setting title
+    plt.title("Dear Giovanni (and Laura)", fontsize=20)
 
     while t < 1000 and list(np.where(S == 1)[0]):
+
         nx, ny = update_position()
         update_states()
         man_made_test_agents()
-       
-
-        
-
-
         
         # lockdown_enabled loop
         if start_lock < t < start_lock + 200 and lockdown_enabled:
@@ -213,6 +247,14 @@ if __name__ == '__main__':
 
         t += 1
 
-        if t % 10 == 0:
-            plot_sir()
+        xSus,ySus,xInf,yInf,xRec,yRec = update_fig(x,y,S)
+        sus.set_offsets(np.c_[xSus,ySus])
+        inf.set_offsets(np.c_[xInf,yInf])
+        rec.set_offsets(np.c_[xRec,yRec])
+
+        # re-drawing the figure
+        fig.canvas.draw()
+        
+        # to flush the GUI events
+        fig.canvas.flush_events()
     
