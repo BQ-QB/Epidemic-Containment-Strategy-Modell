@@ -8,12 +8,12 @@ def __init__():
     isolated = np.zeros(n)  # Isolation array, 0: not isolated, 1: Is currently in isolation
     temperatures = np.zeros(n, dtype='float16')  # temperature array
     tested = np.zeros(n)
-    aPosition = list(zip(x,y))
+    a_position = list(zip(x,y))
     S[0:initial_infected] = 1  # Infect agents that are close to center
     nx = x  # updated x
     ny = y  # updated y
 
-    return x, y, S, isolated, temperatures, tested, nx, ny, aPosition
+    return x, y, S, isolated, temperatures, tested, nx, ny, a_position
 
 
    
@@ -135,26 +135,26 @@ def set_temps():
 
 def update_fig(x,y,S):
     sus = np.where(S==0)[0]
-    xSus = []
-    ySus = []
+    x_sus = []
+    y_sus = []
     for index in sus:
-        xSus.append(x[index])
-        ySus.append(y[index])
+        x_sus.append(x[index])
+        y_sus.append(y[index])
 
-    xInf = []
-    yInf = []
+    x_inf = []
+    y_inf = []
     inf = np.where(S==1)[0]
     for index in inf:
-        xInf.append(x[index])
-        yInf.append(y[index])
+        x_inf.append(x[index])
+        y_inf.append(y[index])
     
-    xRec = []
-    yRec = []
+    x_rec = []
+    y_rec = []
     rec = np.where(S==2)[0]
     for index in rec:
-        xInf.append(x[index])
-        yInf.append(y[index])
-    return xSus,ySus,xInf,yInf,xRec,yRec
+        x_rec.append(x[index])
+        y_rec.append(y[index])
+    return x_sus,y_sus,x_inf,y_inf,x_rec,y_rec
 
 
 if __name__ == '__main__':
@@ -178,7 +178,7 @@ if __name__ == '__main__':
     start_lock = 50
     lockdown_enabled = False
     test_capacity = 30
-    x, y, S, isolated, temperatures, tested, nx, ny, aPosition = __init__()
+    x, y, S, isolated, temperatures, tested, nx, ny, a_position = __init__()
 
     set_temps()
     t = 0
@@ -208,7 +208,7 @@ if __name__ == '__main__':
 
     index_list = np.zeros((150*test_capacity))
 
-    xSus,ySus,xInf,yInf,xRec,yRec = update_fig(x,y,S)
+    x_sus,y_sus,x_inf,y_inf,x_rec,y_rec = update_fig(x,y,S)
 
     # to run GUI event loop
     plt.ion()
@@ -216,9 +216,9 @@ if __name__ == '__main__':
     # creating subplots
     fig, ax = plt.subplots(figsize=(5, 5))
 
-    sus = ax.scatter(xSus,ySus,color='blue')
-    inf = ax.scatter(xInf,yInf,color='red')
-    rec = ax.scatter(xRec,yRec,color='green')
+    sus = ax.scatter(x_sus,y_sus,color='blue')
+    inf = ax.scatter(x_inf,y_inf,color='red')
+    rec = ax.scatter(x_rec,y_rec,color='green')
 
     # setting title
     plt.title("Dear Giovanni (and Laura)", fontsize=20)
@@ -228,7 +228,6 @@ if __name__ == '__main__':
         nx, ny = update_position()
         update_states()
         man_made_test_agents()
-        
         # lockdown_enabled loop
         if start_lock < t < start_lock + 200 and lockdown_enabled:
             D = D_reduced
@@ -247,10 +246,10 @@ if __name__ == '__main__':
 
         t += 1
 
-        xSus,ySus,xInf,yInf,xRec,yRec = update_fig(x,y,S)
-        sus.set_offsets(np.c_[xSus,ySus])
-        inf.set_offsets(np.c_[xInf,yInf])
-        rec.set_offsets(np.c_[xRec,yRec])
+        x_sus,y_sus,x_inf,y_inf,x_rec,y_rec = update_fig(x,y,S)
+        sus.set_offsets(np.c_[x_sus,y_sus])
+        inf.set_offsets(np.c_[x_inf,y_inf])
+        rec.set_offsets(np.c_[x_rec,y_rec])
 
         # re-drawing the figure
         fig.canvas.draw()
