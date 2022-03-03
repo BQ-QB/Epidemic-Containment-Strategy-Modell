@@ -7,7 +7,7 @@ app = flask.Flask(__name__)
 @app.route('/')
 @app.route('/home')
 def home():
-    return "YEP COCK CALLE ÄR EN RIKTIG G"
+    return "Deploying minus 20 hours on Max"
 
 if __name__ == "__main__":
     app.secret_key = 'Epidemic_Enjoyers'
