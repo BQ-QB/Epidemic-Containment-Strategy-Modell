@@ -16,6 +16,7 @@ def __init__():
     return x, y, S, isolated, temperatures, tested, nx, ny, a_position
 
 # Plots graph
+
 def plot_sir():
     index_list_for_plot = susceptible_history.shape[0]
     index_list_for_plot = np.array([i for i in range(index_list_for_plot)])
