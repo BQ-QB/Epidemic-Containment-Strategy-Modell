@@ -7,9 +7,9 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import matplotlib.pyplot as plt
 import numpy as np
 
-n = 800
-l = 30
-initial_infected = 30
+n = 80
+l = 10
+initial_infected = 5
 x = np.floor(np.random.rand(n) * l)  # x coordinates
 y = np.floor(np.random.rand(n) * l)  # y coordinates
 S = np.zeros(n)  # status array, 0: Susceptiple, 1: Infected, 2: recovered, 3: Dead
