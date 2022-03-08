@@ -132,7 +132,11 @@ def plot_sir():
 def update_position():
     k = 0.04
     for agent in range(n):
-        prob_x = [max(0,1/3 +k*(x[agent]-x_init[agent])), 1/3, max(0, 1/3-k*(x[agent]-x_init[agent]))]
+        prob_x = [
+            max(0,1/3 +k*(x[agent]-x_init[agent])),
+            1/3,
+            max(0, 1/3-k*(x[agent]-x_init[agent]))
+        ]
         prob_x /= sum(prob_x)
         prob_y = [max(0, 1/3 +k*(y[agent]-y_init[agent])), 1/3, max(0, 1/3-k*(y[agent]-y_init[agent]))]
         prob_y /= sum(prob_y)
@@ -144,7 +148,21 @@ def update_position():
         nx[i] = x[i]
         ny[i] = y[i]
     return nx, ny
- 
+
+
+n_hotspot = 2 # Antal hotspots, should be initialized in main according to the current structure! 
+def hotspot():
+    hotspot_position = np.random.randint(0, l, size=(n_hotspot, 2))     # gets a random position for each of the hotspot
+    agent_indices = np.randint(0, n, size=np.rand(0,n))     # creates a list containning arandom portion of total agents to do the hotspot walk
+    hotspot_indices = np.random.choice([i for i in range(n_hotspot)], size=agent_indices.shape)     #
+    
+    agent_orginal_postion_x = nx[:,0]
+    agent_orginal_positon_y = ny[:,1]
+
+    nx[hotspot_indices] = hotspot_position[hotspot_indices, 0]
+    ny[hotspot_indices] = hotspot_position[hotspot_indices, 1]
+
+    return nx, ny, agent_orginal_postion_x, agent_orginal_positon_y
  
 def gen_contacts():
     contact_list = np.zeros(n)
@@ -464,8 +482,10 @@ if __name__ == '__main__':
         # if dynamic_update: ... ? Vi kan lägga till så att endast om man har klickat i att man vill
         # kunna ändra params under körning så uppdateras de
         nx, ny = update_position()
+        nx, ny, previous_nx, previous_ny = hotspot() 
         update_states()
-       
+        nx, ny = previous_nx, previous_ny # resets hotspot positions
+        
         if t<20:
             initial_testing()
         if t == 20:
